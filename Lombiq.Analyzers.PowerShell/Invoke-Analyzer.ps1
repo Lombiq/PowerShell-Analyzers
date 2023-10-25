@@ -111,12 +111,35 @@ $analyzerParameters = @{
     IncludeDefaultRules = $true
     Fix = $Fix
 }
+$maxRetries = 3
 $results = Find-Recursively -IncludeFile '*.ps1', '*.psm1', '*.psd1' -ExcludeDirectory node_modules |
     Where-Object { # Exclude /TestSolutions/Violate-Analyzers.ps1 and /TestSolutions/*/Violate-Analyzers.ps1
         $IncludeTestSolutions -or -not (
             $PSItem.Name -eq 'Violate-Analyzers.ps1' -and
             ($PSItem.Directory.Name -eq 'TestSolutions' -or $PSItem.Directory.Parent.Name -eq 'TestSolutions')) } |
-    ForEach-Object { Invoke-ScriptAnalyzer -Path $PSItem.FullName @analyzerParameters }
+    ForEach-Object {
+        $retryCount = 0
+        while ($retryCount -lt $maxRetries)
+        {
+            try
+            {
+                Invoke-ScriptAnalyzer -Path $PSItem.FullName @analyzerParameters
+                break
+            }
+            catch
+            {
+                $retryCount++
+                if ($retryCount -eq $maxRetries)
+                {
+                    Write-Error "Failed to analyze $($PSItem.FullName) after $maxRetries attempts. Exception: $_"
+                }
+                else
+                {
+                    Write-Error "Retry #$($retryCount): An exception occurred: $_. Retrying..."
+                }
+            }
+        }
+    }
 
 foreach ($result in $results)
 {

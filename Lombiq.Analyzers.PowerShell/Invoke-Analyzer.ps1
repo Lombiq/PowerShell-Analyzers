@@ -135,7 +135,7 @@ $results = Find-Recursively -IncludeFile '*.ps1', '*.psm1', '*.psd1' -ExcludeDir
                 }
                 else
                 {
-                    Write-Error "Retry #$($retryCount + 1): An exception occurred: $_. Retrying..."
+                    Write-Warning "Retry #$($retryCount + 1): An exception occurred: $_. Retrying..."
                 }
             }
         }

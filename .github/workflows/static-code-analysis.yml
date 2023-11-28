@@ -10,6 +10,12 @@ on:
           are used.
 
     inputs:
+      cancel-in-progress-for-this-pr:
+        description: >
+          When set to "true", it will cancel the already running workflow for this PR. See the concurrency settings of
+          the job for more details.
+        type: string
+        default: 'false'
       run-windows-powershell:
         required: false
         type: string
@@ -52,6 +58,19 @@ jobs:
       matrix:
         machine-type: ${{ fromJson(inputs.machine-types) }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
+    concurrency:
+      # If "cancel-in-progress-for-this-pr" is set to "true" and this run is for a PR, then the concurrency group will
+      # be constructed from a handful of parameters to produce a value that would evaluate to the same value on a
+      # subsequent push, causing the already running workflow for this PR (in this repository) to be cancelled.
+      # Otherwise it will be the ID of the workflow run and the machine type, making it more unique and not cancel
+      # anything.
+      group: |
+        ${{
+          inputs.cancel-in-progress-for-this-pr == 'true' && github.event_name == 'pull_request'
+            && format('{0}_{1}_{2}', github.workflow, github.ref, matrix.machine-type)
+            || format('{0}_{1}', github.run_id, matrix.machine-type)
+        }}
+      cancel-in-progress: ${{ inputs.cancel-in-progress-for-this-pr == 'true' }}
     steps:
       - name: Checkout
         uses: Lombiq/GitHub-Actions/.github/actions/checkout@dev

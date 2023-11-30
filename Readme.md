@@ -66,6 +66,8 @@ See the [workflow](.github/workflows/static-code-analysis.yml), which is a wrapp
 ```yaml
   powershell-static-code-analysis:
     uses: Lombiq/PowerShell-Analyzers/.github/workflows/static-code-analysis.yml@dev
+    with:
+      cancel-in-progress-for-this-pr: 'true' # Cancel the already running workflow for the given pull request. Default is 'false'.
 ```
 
 #### MSBuild

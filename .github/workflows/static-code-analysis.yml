@@ -10,6 +10,12 @@ on:
           are used.
 
     inputs:
+      cancel-in-progress-for-this-pr:
+        description: >
+          When set to "true", it will cancel the already running workflow for this pull request. See the concurrency
+          settings of the job for more details.
+        type: string
+        default: 'true'
       run-windows-powershell:
         required: false
         type: string
@@ -22,8 +28,8 @@ on:
         default: "true"
         description: >
           If set to "true", static code analysis is ran through PowerShell Core (version 7+). When not "true", consider
-          removing Linux-based machine-types from the strategy matrix as they won't run analysis through Windows PowerShell
-          either.
+          removing Linux-based machine-types from the strategy matrix as they won't run analysis through Windows
+          PowerShell either.
       # This needs to be stringified JSON because inputs don't support arrays, see
       # https://github.community/t/reusable-workflow-with-strategy-matrix/205676/2.
       machine-types:
@@ -52,6 +58,19 @@ jobs:
       matrix:
         machine-type: ${{ fromJson(inputs.machine-types) }}
     timeout-minutes: ${{ inputs.timeout-minutes }}
+    concurrency:
+      # If "cancel-in-progress-for-this-pr" is set to "true" and this run is for a pull request, then the concurrency
+      # key will be constructed from a handful of parameters to produce a value that would evaluate to the same value on
+      # a subsequent push, causing the already running workflow for this pull request (in this repository) to be
+      # cancelled. Otherwise it will be the ID of the workflow run and the machine type, making it more unique and not
+      # cancel anything.
+      group: |
+        ${{
+          inputs.cancel-in-progress-for-this-pr == 'true' && github.event_name == 'pull_request'
+            && format('{0}_{1}_{2}', github.workflow, github.ref, matrix.machine-type)
+            || format('{0}_{1}', github.run_id, matrix.machine-type)
+        }}
+      cancel-in-progress: ${{ inputs.cancel-in-progress-for-this-pr == 'true' }}
     steps:
       - name: Checkout
         uses: Lombiq/GitHub-Actions/.github/actions/checkout@dev

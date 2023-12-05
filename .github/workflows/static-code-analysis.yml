@@ -15,7 +15,7 @@ on:
           When set to "true", it will cancel the already running workflow for this PR. See the concurrency settings of
           the job for more details.
         type: string
-        default: 'false'
+        default: 'true'
       run-windows-powershell:
         required: false
         type: string

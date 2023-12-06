@@ -63,7 +63,8 @@ jobs:
       # key will be constructed from a handful of parameters to produce a value that would evaluate to the same value on
       # a subsequent push, causing the already running workflow for this pull request (in this repository) to be
       # cancelled. Otherwise it will be the ID of the workflow run and the machine type, making it more unique and not
-      # cancel anything.
+      # cancel anything. A technical name for this workflow is also included in both cases, so that it doesn't come into
+      # conflict with other jobs calling a different workflow that are started by the same caller workflow.
       group: |
         ${{
           inputs.cancel-in-progress-for-this-pr == 'true' && github.event_name == 'pull_request'

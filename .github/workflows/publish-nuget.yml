@@ -10,7 +10,7 @@ jobs:
     name: Publish to NuGet
     uses: Lombiq/GitHub-Actions/.github/workflows/publish-nuget.yml@dev
     with:
-      # These warnings are related to the tooling erroneously assuming that a ps1 file must be an 
+      # These warnings are related to the tooling erroneously assuming that a ps1 file must be an
       # (un)install script. In this repo the ps1 files are assets to be used by the consumer.
       dotnet-pack-ignore-warning: NU5110 NU5111
     secrets:

@@ -17,17 +17,17 @@ jobs:
       timeout-minutes: 30
       build-expected-code-analysis-errors: |
         MSB3073: The command exited with non-zero code.
+        PSAvoidExclaimOperator: Avoid using the ! negation operator
         PSAvoidUsingAutomaticVariableAlias: '$_' is an alias of '$PSItem'.
         PSAvoidUsingCmdletAliases: '%' is an alias of 'ForEach-Object'.
+        PSAvoidUsingDoubleQuotesForConstantString: Use single quotes when a string is constant.
         PSAvoidUsingEmptyCatchBlock: Empty catch block is used.
         PSAvoidUsingLineContinuation: Using backtick (line continuation) makes the code harder to read and maintain.
-        PSUseApprovedVerbs: The cmdlet 'Violate-Analyzers' uses an unapproved verb.
-        PSUseSingularNouns: The cmdlet 'Violate-Analyzers' uses a plural noun.
         PSAvoidUsingWriteHost: File 'Violate-Analyzers.ps1' uses Write-Host.
-        PSUseConsistentIndentation: Indentation not consistent
-        PSAvoidUsingDoubleQuotesForConstantString: Use single quotes when a string is constant.
         PSPlaceOpenBrace: Open brace is not on a new line.
-        PSAvoidExclaimOperator: Avoid using the ! negation operator
+        PSUseApprovedVerbs: The cmdlet 'Violate-Analyzers' uses an unapproved verb.
+        PSUseConsistentIndentation: Indentation not consistent
+        PSUseSingularNouns: The cmdlet 'Violate-Analyzers' uses a plural noun.
 
   call-test-analysis-failure-local:
     name: Test Analysis Failure - Local ProjectReference
@@ -38,14 +38,14 @@ jobs:
       timeout-minutes: 30
       build-expected-code-analysis-errors: |
         MSB3073: The command exited with non-zero code.
+        PSAvoidExclaimOperator: Avoid using the ! negation operator
         PSAvoidUsingAutomaticVariableAlias: '$_' is an alias of '$PSItem'.
         PSAvoidUsingCmdletAliases: '%' is an alias of 'ForEach-Object'.
+        PSAvoidUsingDoubleQuotesForConstantString: Use single quotes when a string is constant.
         PSAvoidUsingEmptyCatchBlock: Empty catch block is used.
         PSAvoidUsingLineContinuation: Using backtick (line continuation) makes the code harder to read and maintain.
-        PSUseApprovedVerbs: The cmdlet 'Violate-Analyzers' uses an unapproved verb.
-        PSUseSingularNouns: The cmdlet 'Violate-Analyzers' uses a plural noun.
         PSAvoidUsingWriteHost: File 'Violate-Analyzers.ps1' uses Write-Host.
-        PSUseConsistentIndentation: Indentation not consistent
-        PSAvoidUsingDoubleQuotesForConstantString: Use single quotes when a string is constant.
         PSPlaceOpenBrace: Open brace is not on a new line.
-        PSAvoidExclaimOperator: Avoid using the ! negation operator
+        PSUseApprovedVerbs: The cmdlet 'Violate-Analyzers' uses an unapproved verb.
+        PSUseConsistentIndentation: Indentation not consistent
+        PSUseSingularNouns: The cmdlet 'Violate-Analyzers' uses a plural noun.

@@ -10,6 +10,9 @@
         'PSUseShouldProcessForStateChangingFunctions'
     )
     Rules = @{
+        PSAvoidExclaimOperator = @{
+            Enable = $true
+        }
         PSAvoidSemicolonsAsLineTerminators = @{
             Enable = $true
         }

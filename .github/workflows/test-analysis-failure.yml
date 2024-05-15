@@ -26,6 +26,8 @@ jobs:
         PSAvoidUsingWriteHost: File 'Violate-Analyzers.ps1' uses Write-Host.
         PSUseConsistentIndentation: Indentation not consistent
         PSAvoidUsingDoubleQuotesForConstantString: Use single quotes when a string is constant.
+        PSPlaceOpenBrace: Open brace is not on a new line.
+        PSAvoidExclaimOperator: Avoid using the ! negation operator
 
   call-test-analysis-failure-local:
     name: Test Analysis Failure - Local ProjectReference
@@ -45,3 +47,5 @@ jobs:
         PSAvoidUsingWriteHost: File 'Violate-Analyzers.ps1' uses Write-Host.
         PSUseConsistentIndentation: Indentation not consistent
         PSAvoidUsingDoubleQuotesForConstantString: Use single quotes when a string is constant.
+        PSPlaceOpenBrace: Open brace is not on a new line.
+        PSAvoidExclaimOperator: Avoid using the ! negation operator

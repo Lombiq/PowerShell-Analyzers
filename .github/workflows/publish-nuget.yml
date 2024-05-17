@@ -8,7 +8,7 @@ on:
 jobs:
   publish-nuget:
     name: Publish to NuGet
-    uses: Lombiq/GitHub-Actions/.github/workflows/publish-nuget.yml@dev
+    uses: Lombiq/GitHub-Actions/.github/workflows/publish-nuget.yml@issue/OSOE-710
     with:
       # These warnings are related to the tooling erroneously assuming that a ps1 file must be an (un)install script. In
       # this repo the ps1 files are assets to be used by the consumer.

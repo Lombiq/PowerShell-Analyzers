@@ -115,3 +115,7 @@ Check out [the official documentation](https://learn.microsoft.com/en-us/powersh
 Bug reports, feature requests, comments, questions, code contributions and love letters are warmly welcome. You can send them to us via GitHub issues and pull requests. Please adhere to our [open-source guidelines](https://lombiq.com/open-source-guidelines) while doing so.
 
 This project is developed by [Lombiq Technologies](https://lombiq.com/). Commercial-grade support is available through Lombiq.
+
+### Publishing a new NuGet package
+
+When publishing a new version of the NuGet package, even if it's just a pre-release, also update the package references under _TestSolutions\Lombiq.Analyzers.PowerShell.PackageReference_ to the new version. This is necessary to test the analyzers in the context of a consuming project.

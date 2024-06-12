@@ -53,6 +53,9 @@ function Measure-VariableNameCasing
                 {
                     $paramTokenFound = $true
 
+                    # Reset the list of parameter names in case a file has multiple functions.
+                    $parameterNames = @()
+
                     continue
                 }
 

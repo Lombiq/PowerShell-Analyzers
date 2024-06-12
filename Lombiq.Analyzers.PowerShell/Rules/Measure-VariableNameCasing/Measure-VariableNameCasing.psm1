@@ -100,8 +100,8 @@ function Measure-VariableNameCasing
                                     'Parameter names should contain only alphanumeric characters and start with an'
                                     "uppercase letter: '$($token.Name)'."
                                 ) -join ' '
-                                'RuleName' = 'PSUseCorrectParameterNameStyling'
-                                'RuleSuppressionID' = 'PSUseCorrectParameterNameStyling'
+                                'RuleName' = 'PSUseCorrectParameterNameCasing'
+                                'RuleSuppressionID' = 'PSUseCorrectParameterNameCasing'
                                 'Severity' = 'Warning'
                             }
                         }
@@ -164,8 +164,8 @@ function Measure-VariableNameCasing
                                     "Automatic variables should be used with the correct casing: '$automaticVariable'"
                                     "instead of '$($token.Name)'."
                                 ) -join ' '
-                                'RuleName' = 'PSUseCorrectAutomaticVariableNameStyling'
-                                'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameStyling'
+                                'RuleName' = 'PSUseCorrectAutomaticVariableNameCasing'
+                                'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'
                                 'Severity' = 'Warning'
                             }
 
@@ -189,8 +189,8 @@ function Measure-VariableNameCasing
                                         "Parameters should be used with the declared casing: '$parameter' instead of"
                                         "'$($token.Name)'."
                                     ) -join ' '
-                                    'RuleName' = 'PSUseCorrectParameterNameStyling'
-                                    'RuleSuppressionID' = 'PSUseCorrectParameterNameStyling'
+                                    'RuleName' = 'PSUseParameterNameDeclaredCasing'
+                                    'RuleSuppressionID' = 'PSUseParameterNameDeclaredCasing'
                                     'Severity' = 'Warning'
                                 }
 
@@ -210,8 +210,8 @@ function Measure-VariableNameCasing
                                     'Variable names should contain only alphanumeric characters and start with a'
                                     "lowercase letter: '$($token.Name)'."
                                 ) -join ' '
-                                'RuleName' = 'PSUseCorrectVariableNameStyling'
-                                'RuleSuppressionID' = 'PSUseCorrectVariableNameStyling'
+                                'RuleName' = 'PSUseCorrectVariableNameCasing'
+                                'RuleSuppressionID' = 'PSUseCorrectVariableNameCasing'
                                 'Severity' = 'Warning'
                             }
                         }

@@ -82,7 +82,9 @@ function Measure-VariableNameCasing
 
                     # If we are inside the parameter list and the parenthesis depth is 1, we are looking at parameter
                     # names.
-                    if ($parenthesisDepth -eq 1 -and $token.Kind -eq [System.Management.Automation.Language.TokenKind]::Variable)
+                    if ($parenthesisDepth -eq 1 -and
+                        $token.Kind -eq [System.Management.Automation.Language.TokenKind]::Variable -and
+                        $automaticVariableNames -notcontains $token.Name)
                     {
                         $parameterNames += $token.Name
 

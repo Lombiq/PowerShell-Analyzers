@@ -31,7 +31,8 @@ function Measure-AutomaticVariableAlias
         try
         {
             # Filter down tokens to just variable tokens with the name "_".
-            foreach ($automaticVariableAliasToken in $Token | Where-Object { $PSItem.GetType().Name -eq 'VariableToken' -and $PSItem.Name -eq '_' })
+            foreach ($automaticVariableAliasToken in $Token | Where-Object {
+                    $PSItem.Kind -eq [System.Management.Automation.Language.TokenKind]::Variable -and $PSItem.Name -eq '_' })
             {
                 $correctionTypeName = 'Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent'
                 $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(

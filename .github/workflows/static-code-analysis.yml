@@ -77,10 +77,9 @@ jobs:
         uses: Lombiq/GitHub-Actions/.github/actions/checkout@dev
         with:
           token: ${{ secrets.CHECKOUT_TOKEN }}
-          ref: 'refs/heads/issue/OSOE-580'
 
       - name: PowerShell Static Code Analysis
-        uses: Lombiq/PowerShell-Analyzers/.github/actions/static-code-analysis@dev
+        uses: Lombiq/PowerShell-Analyzers/.github/actions/static-code-analysis@issue/OSOE-580
         with:
           run-windows-powershell: ${{ inputs.run-windows-powershell }}
           run-powershell-core: ${{ inputs.run-powershell-core }}

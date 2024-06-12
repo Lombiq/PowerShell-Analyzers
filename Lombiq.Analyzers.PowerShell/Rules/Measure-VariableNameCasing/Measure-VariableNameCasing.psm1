@@ -4,14 +4,14 @@
 .DESCRIPTION
 
 .EXAMPLE
-    Measure-VariableNameStyling -Token $Token
+    Measure-VariableNameCasing -Token $Token
 .INPUTS
     [System.Management.Automation.Language.Token[]]
 .OUTPUTS
     [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 #>
 
-function Measure-VariableNameStyling
+function Measure-VariableNameCasing
 {
     [CmdletBinding()]
     [OutputType([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]

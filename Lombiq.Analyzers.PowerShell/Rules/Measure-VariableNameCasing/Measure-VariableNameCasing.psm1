@@ -41,9 +41,6 @@ function Measure-VariableNameCasing
         $parameterBlockParenthesisDepth = 0
         $parameterBlockProcessed = $false
 
-        $scriptBlockFound = $false
-        $scriptBlockDepth = 0
-
         try
         {
             for ($i = 0; $i -lt $Token.Count; $i++)
@@ -53,6 +50,7 @@ function Measure-VariableNameCasing
                 # *******
                 # STEP 0: Find the function token and reset the state.
                 # *******
+
                 if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Function)
                 {
                     $parameterNames = @()
@@ -106,7 +104,7 @@ function Measure-VariableNameCasing
                     {
                         $parameterBlockParenthesisDepth--
 
-                        # If the parenthesis depth reaches 0, we have reached the end of the Param block.
+                        # If the parenthesis depth reaches 0, we have reached the end of the parameter block.
                         if ($parameterBlockParenthesisDepth -eq 0)
                         {
                             $parameterBlockProcessed = $true
@@ -141,79 +139,56 @@ function Measure-VariableNameCasing
                 }
 
                 # *******
-                # STEP 4: Find script blocks and check the variable names against the automatic variables, the known
-                # parameters and the correct format.
+                # STEP 4: Find variables inside the function body and check their names against the automatic variables,
+                # the known parameters and the correct format.
                 # *******
 
-                # Find a token corresponding to a script block to start looking for variable names.
-                if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Begin -or
-                    $currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Process -or
-                    $currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::End)
+                if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Variable)
                 {
-                    $scriptBlockFound = $true
+                    # *******
+                    # STEP 4.1: Find automatic variables that are used with the wrong casing.
+                    # *******
 
-                    continue
-                }
+                    $automaticVariable = $automaticVariableNames | Where-Object {
+                        $PSItem.ToLowerInvariant() -eq $currentToken.Name.ToLowerInvariant() } | Select-Object -First 1
 
-                if ($scriptBlockFound)
-                {
-                    # Find '{' tokens to increase the script block depth.
-                    if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::LCurly)
+                    if ($null -ne $automaticVariable -and -not $automaticVariable.Equals($currentToken.Name, 'InvariantCulture'))
                     {
-                        $scriptBlockDepth++
-
-                        continue
-                    }
-
-                    # Find '}' tokens to decrease the script block depth.
-                    if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::RCurly)
-                    {
-                        $scriptBlockDepth--
-
-                        # If the parenthesis depth reaches 0, we have reached the end of the script block.
-                        if ($scriptBlockDepth -eq 0)
-                        {
-                            $scriptBlockFound = $false
+                        $results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                            'Extent' = $currentToken.Extent
+                            'Message' = @(
+                                "Automatic variables should be used with the correct casing: '$automaticVariable'"
+                                "instead of '$($currentToken.Name)'."
+                            ) -join ' '
+                            'RuleName' = 'PSUseCorrectAutomaticVariableNameCasing'
+                            'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'
+                            'Severity' = 'Warning'
                         }
 
                         continue
                     }
 
-                    if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Variable)
+                    # When we are inside a parameter block, we don't need to validate against rules for variables.
+                    if ($parameterBlockFound -and -not $parameterBlockProcessed)
                     {
-                        # *******
-                        # STEP 4.1: Find automatic variables that are used with the wrong casing.
-                        # *******
+                        continue
+                    }
 
-                        $automaticVariable = $automaticVariableNames | Where-Object {
+                    # *******
+                    # STEP 4.2: Find parameters that are used with the wrong casing.
+                    # *******
+
+                    # If we found parameters, then check the variable name against them.
+                    if ($parameterNames.Length -gt 0)
+                    {
+                        # Find a parameter with the same name as the current token regardless of the casing.
+                        $parameter = $parameterNames | Where-Object {
                             $PSItem.ToLowerInvariant() -eq $currentToken.Name.ToLowerInvariant() } | Select-Object -First 1
 
-                        if ($null -ne $automaticVariable -and -not $automaticVariable.Equals($currentToken.Name, 'InvariantCulture'))
+                        if ($null -ne $parameter)
                         {
-                            $results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-                                'Extent' = $currentToken.Extent
-                                'Message' = @(
-                                    "Automatic variables should be used with the correct casing: '$automaticVariable'"
-                                    "instead of '$($currentToken.Name)'."
-                                ) -join ' '
-                                'RuleName' = 'PSUseCorrectAutomaticVariableNameCasing'
-                                'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'
-                                'Severity' = 'Warning'
-                            }
-
-                            continue
-                        }
-
-                        # *******
-                        # STEP 4.2: Find parameters that are used with the wrong casing.
-                        # *******
-
-                        if ($parameterNames.Length -gt 0)
-                        {
-                            $parameter = $parameterNames | Where-Object {
-                                $PSItem.ToLowerInvariant() -eq $currentToken.Name.ToLowerInvariant() } | Select-Object -First 1
-
-                            if ($null -ne $parameter -and -not $parameter.Equals($currentToken.Name, 'InvariantCulture'))
+                            # The variable name's casing is different from the parameter's.
+                            if (-not $parameter.Equals($currentToken.Name, 'InvariantCulture'))
                             {
                                 $results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                                     'Extent' = $currentToken.Extent
@@ -225,27 +200,27 @@ function Measure-VariableNameCasing
                                     'RuleSuppressionID' = 'PSUseParameterNameDeclaredCasing'
                                     'Severity' = 'Warning'
                                 }
-
-                                continue
                             }
+
+                            continue
                         }
+                    }
 
-                        # *******
-                        # STEP 4.3: Find variables that are used with the wrong casing.
-                        # *******
+                    # *******
+                    # STEP 4.3: Find variables that are used with the wrong casing.
+                    # *******
 
-                        if ($false -and $currentToken.Name -NotMatch '(?-i)^[a-z][a-zA-Z0-9]*')
-                        {
-                            $results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-                                'Extent' = $currentToken.Extent
-                                'Message' = @(
-                                    'Variable names should contain only alphanumeric characters and start with a'
-                                    "lowercase letter: '$($currentToken.Name)'."
-                                ) -join ' '
-                                'RuleName' = 'PSUseCorrectVariableNameCasing'
-                                'RuleSuppressionID' = 'PSUseCorrectVariableNameCasing'
-                                'Severity' = 'Warning'
-                            }
+                    if ($currentToken.Name -NotMatch '(?-i)^[a-z][a-zA-Z0-9]*')
+                    {
+                        $results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                            'Extent' = $currentToken.Extent
+                            'Message' = @(
+                                'Variable names should contain only alphanumeric characters and start with a'
+                                "lowercase letter: '$($currentToken.Name)'."
+                            ) -join ' '
+                            'RuleName' = 'PSUseCorrectVariableNameCasing'
+                            'RuleSuppressionID' = 'PSUseCorrectVariableNameCasing'
+                            'Severity' = 'Warning'
                         }
                     }
                 }

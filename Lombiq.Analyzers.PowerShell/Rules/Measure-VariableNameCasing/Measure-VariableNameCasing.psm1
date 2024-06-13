@@ -91,8 +91,12 @@ function Measure-VariableNameCasing
 
                 if ($parameterBlockFound -and -not $parameterBlockProcessed)
                 {
-                    # Find '(' tokens to increase the parenthesis depth.
-                    if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::LParen)
+                    # Find '('-like tokens to increase the parenthesis depth.
+                    if ($currentToken.Kind -in @(
+                            [System.Management.Automation.Language.TokenKind]::AtParen
+                            [System.Management.Automation.Language.TokenKind]::DollarParen
+                            [System.Management.Automation.Language.TokenKind]::LParen
+                        ))
                     {
                         $parameterBlockParenthesisDepth++
 

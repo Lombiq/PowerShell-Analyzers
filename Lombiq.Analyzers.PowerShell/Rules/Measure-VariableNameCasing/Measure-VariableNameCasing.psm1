@@ -25,12 +25,6 @@ function Measure-VariableNameCasing
 
     Process
     {
-        $results = @()
-        $parameterNames = @()
-        $paramTokenFound = $false
-        $parenthesisDepth = 0
-        $scriptBlockFound = $false
-        $scriptBlockDepth = 0
         # See https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables.
         $automaticVariableNames = (
             'args', 'ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs', 'EventSubscriber',
@@ -40,31 +34,69 @@ function Measure-VariableNameCasing
             'PSItem', 'PSScriptRoot', 'PSSenderInfo', 'PSUICulture', 'PSVersionTable', 'PWD', 'Sender', 'ShellId',
             'StackTrace', 'switch', 'this', 'true')
 
+        $results = @()
+
+        $parameterNames = @()
+        $parameterBlockFound = $false
+        $parameterBlockParenthesisDepth = 0
+        $parameterBlockProcessed = $false
+
+        $scriptBlockFound = $false
+        $scriptBlockDepth = 0
+
         try
         {
-            foreach ($currentToken in $Token)
+            for ($i = 0; $i -lt $Token.Count; $i++)
             {
-                # *******
-                # STEP 1: Find the Param block and check the parameter names.
-                # *******
+                $currentToken = $Token[$i]
 
-                # Find the Param token to start looking for parameter names.
-                if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Param)
+                # *******
+                # STEP 0: Find the function token and reset the state.
+                # *******
+                if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Function)
                 {
-                    $paramTokenFound = $true
-
-                    # Reset the list of parameter names in case a file has multiple functions.
                     $parameterNames = @()
+                    $parameterBlockFound = $false
+                    $parameterBlockProcessed = $false
+
+                    # *******
+                    # STEP 1: Detect the inline parameter block.
+                    # *******
+
+                    # The token immediately following the function token is the function name. If the one following that
+                    # is LParen, then the parameter block is inline.
+                    if ($Token[$i + 2].Kind -eq [System.Management.Automation.Language.TokenKind]::LParen)
+                    {
+                        $parameterBlockFound = $true
+                        $i++ # Skip the function name token.
+                    }
 
                     continue
                 }
 
-                if ($paramTokenFound)
+                # *******
+                # STEP 2: Detect the normal parameter block that starts with the Param token.
+                # *******
+
+                # If we haven't a found parameter block yet (inline or not), then look for the Param token.
+                if (-not $parameterBlockFound -and -not $parameterBlockProcessed -and
+                    $currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Param)
+                {
+                    $parameterBlockFound = $true
+
+                    continue
+                }
+
+                # *******
+                # STEP 3: Process the parameter block.
+                # *******
+
+                if ($parameterBlockFound -and -not $parameterBlockProcessed)
                 {
                     # Find '(' tokens to increase the parenthesis depth.
                     if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::LParen)
                     {
-                        $parenthesisDepth++
+                        $parameterBlockParenthesisDepth++
 
                         continue
                     }
@@ -72,12 +104,12 @@ function Measure-VariableNameCasing
                     # Find ')' tokens to decrease the parenthesis depth.
                     if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::RParen)
                     {
-                        $parenthesisDepth--
+                        $parameterBlockParenthesisDepth--
 
                         # If the parenthesis depth reaches 0, we have reached the end of the Param block.
-                        if ($parenthesisDepth -eq 0)
+                        if ($parameterBlockParenthesisDepth -eq 0)
                         {
-                            $paramTokenFound = $false
+                            $parameterBlockProcessed = $true
                         }
 
                         continue
@@ -85,7 +117,7 @@ function Measure-VariableNameCasing
 
                     # If we are inside the parameter list and the parenthesis depth is 1, we are looking at parameter
                     # names.
-                    if ($parenthesisDepth -eq 1 -and
+                    if ($parameterBlockParenthesisDepth -eq 1 -and
                         $currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Variable -and
                         $automaticVariableNames -notcontains $currentToken.Name)
                     {
@@ -109,7 +141,7 @@ function Measure-VariableNameCasing
                 }
 
                 # *******
-                # STEP 2: Find script blocks and check the variable names against the automatic variables, the known
+                # STEP 4: Find script blocks and check the variable names against the automatic variables, the known
                 # parameters and the correct format.
                 # *******
 
@@ -150,7 +182,7 @@ function Measure-VariableNameCasing
                     if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Variable)
                     {
                         # *******
-                        # STEP 2.1: Find automatic variables that are used with the wrong casing.
+                        # STEP 4.1: Find automatic variables that are used with the wrong casing.
                         # *******
 
                         $automaticVariable = $automaticVariableNames | Where-Object {
@@ -173,7 +205,7 @@ function Measure-VariableNameCasing
                         }
 
                         # *******
-                        # STEP 2.2: Find parameters that are used with the wrong casing.
+                        # STEP 4.2: Find parameters that are used with the wrong casing.
                         # *******
 
                         if ($parameterNames.Length -gt 0)
@@ -199,7 +231,7 @@ function Measure-VariableNameCasing
                         }
 
                         # *******
-                        # STEP 2.3: Find variables that are used with the wrong casing.
+                        # STEP 4.3: Find variables that are used with the wrong casing.
                         # *******
 
                         if ($false -and $currentToken.Name -NotMatch '(?-i)^[a-z][a-zA-Z0-9]*')

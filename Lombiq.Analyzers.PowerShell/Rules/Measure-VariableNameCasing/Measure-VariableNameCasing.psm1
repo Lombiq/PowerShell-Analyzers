@@ -149,6 +149,12 @@ function Measure-VariableNameCasing
 
                 if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Variable)
                 {
+                    # Skip path-like expressions, such as $Env:SOMETHING, as they produce false positives.
+                    if ($currentToken.Text.Contains(':'))
+                    {
+                        continue
+                    }
+
                     # *******
                     # STEP 4.1: Find automatic variables that are used with the wrong casing.
                     # *******

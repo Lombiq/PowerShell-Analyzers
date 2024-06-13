@@ -152,17 +152,20 @@ function Measure-VariableNameCasing
                     $automaticVariable = $automaticVariableNames | Where-Object {
                         $PSItem.ToLowerInvariant() -eq $currentToken.Name.ToLowerInvariant() } | Select-Object -First 1
 
-                    if ($null -ne $automaticVariable -and -not $automaticVariable.Equals($currentToken.Name, 'InvariantCulture'))
+                    if ($null -ne $automaticVariable)
                     {
-                        $results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-                            'Extent' = $currentToken.Extent
-                            'Message' = @(
-                                "Automatic variables should be used with the correct casing: '$automaticVariable'"
-                                "instead of '$($currentToken.Name)'."
-                            ) -join ' '
-                            'RuleName' = 'PSUseCorrectAutomaticVariableNameCasing'
-                            'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'
-                            'Severity' = 'Warning'
+                        if (-not $automaticVariable.Equals($currentToken.Name, 'InvariantCulture'))
+                        {
+                            $results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                                'Extent' = $currentToken.Extent
+                                'Message' = @(
+                                    "Automatic variables should be used with the correct casing: '$automaticVariable'"
+                                    "instead of '$($currentToken.Name)'."
+                                ) -join ' '
+                                'RuleName' = 'PSUseCorrectAutomaticVariableNameCasing'
+                                'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'
+                                'Severity' = 'Warning'
+                            }
                         }
 
                         continue
@@ -222,6 +225,8 @@ function Measure-VariableNameCasing
                             'RuleSuppressionID' = 'PSUseCorrectVariableNameCasing'
                             'Severity' = 'Warning'
                         }
+
+                        continue
                     }
                 }
             }

@@ -5,7 +5,8 @@
     In general, the community feels you should avoid using those backticks as "line continuation characters" when
     possible. They are hard to read, and easy to miss and mistype. Also, adding an extra whitespace after the backtick
     breaks the command execution. To fix a violation of this rule, please remove backticks from your script and use
-    parameter splatting instead. You can run "Get-Help about_splatting" to get more details.
+    parameter splatting instead. You can run "Get-Help about_splatting" to get more details. Produces warnings of the
+    type 'PSAvoidUsingLineContinuation'.
 .EXAMPLE
     Measure-LineContinuation -Token $Token
 .INPUTS

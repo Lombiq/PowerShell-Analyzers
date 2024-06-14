@@ -1,8 +1,17 @@
 <#
 .SYNOPSIS
-
+    Detects inconsitencies in the casing of parameter names and variable names (including automatic variables).
 .DESCRIPTION
-
+    Raises the following warnings regarding the casing of parameter names and variable names (including automatic
+    variables):
+    - PSUseCorrectParameterNameCasing: Parameter names should contain only alphanumeric characters and start with an
+      uppercase letter.
+    - PSUseCorrectAutomaticVariableNameCasing: Automatic variables should be used with the casing according to the
+      documentation:
+      https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables.
+    - PSUseParameterNameDeclaredCasing: Parameters should be used with the declared casing.
+    - PSUseCorrectVariableNameCasing: Variable names should contain only alphanumeric characters and start with a
+      lowercase letter.
 .EXAMPLE
     Measure-VariableNameCasing -Token $Token
 .INPUTS
@@ -34,7 +43,7 @@ function Measure-VariableNameCasing
             'PSHOME', 'PSItem', 'PSScriptRoot', 'PSSenderInfo', 'PSUICulture', 'PSVersionTable', 'PWD', 'Sender',
             'ShellId', 'StackTrace', 'switch', 'this', 'true')
 
-        $results = @()
+        $analyzerViolations = @()
 
         $parameterNames = @()
         $parameterBlockFound = $false
@@ -48,7 +57,7 @@ function Measure-VariableNameCasing
                 $currentToken = $Token[$i]
 
                 # *******
-                # STEP 0: Find the function token and reset the state.
+                # STEP 0: Find a function token and reset the state.
                 # *******
 
                 if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Function)
@@ -128,7 +137,7 @@ function Measure-VariableNameCasing
                         # If the parameter name is not in the correct format, add a diagnostic record.
                         if ($currentToken.Text -NotMatch '(?-i)^\$[A-Z][a-zA-Z0-9]*')
                         {
-                            $results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                            $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                                 'Extent' = $currentToken.Extent
                                 'Message' = @(
                                     'Parameter names should contain only alphanumeric characters and start with an'
@@ -166,7 +175,7 @@ function Measure-VariableNameCasing
                     {
                         if (-not $automaticVariable.Equals($currentToken.Name, 'InvariantCulture'))
                         {
-                            $results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                            $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                                 'Extent' = $currentToken.Extent
                                 'Message' = @(
                                     "Automatic variables should be used with the correct casing: '`$$automaticVariable'"
@@ -195,15 +204,14 @@ function Measure-VariableNameCasing
                     if ($parameterNames.Length -gt 0)
                     {
                         # Find a parameter with the same name as the current token regardless of the casing.
-                        $parameter = $parameterNames | Where-Object {
-                            $PSItem.ToLowerInvariant() -eq $currentToken.Name.ToLowerInvariant() } | Select-Object -First 1
+                        $parameter = $parameterNames | Where-Object { $PSItem -eq $currentToken.Name } | Select-Object -First 1
 
                         if ($null -ne $parameter)
                         {
                             # The variable name's casing is different from the parameter's.
                             if (-not $parameter.Equals($currentToken.Name, 'InvariantCulture'))
                             {
-                                $results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                                $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                                     'Extent' = $currentToken.Extent
                                     'Message' = @(
                                         "Parameters should be used with the declared casing: '`$$parameter' instead of"
@@ -225,7 +233,7 @@ function Measure-VariableNameCasing
 
                     if ($currentToken.Text -NotMatch '(?-i)^\$[a-z][a-zA-Z0-9]*')
                     {
-                        $results += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                        $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                             'Extent' = $currentToken.Extent
                             'Message' = @(
                                 'Variable names should contain only alphanumeric characters and start with a'
@@ -241,7 +249,7 @@ function Measure-VariableNameCasing
                 }
             }
 
-            return $results
+            return $analyzerViolations
         }
         catch
         {

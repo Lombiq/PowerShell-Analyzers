@@ -1,8 +1,9 @@
 ﻿<#
 .SYNOPSIS
-    Detects the usages of the alias $_ of the automatic variable $PSItem and suggests to correct them.
+    Detects the usages of the alias '$_' of the automatic variable '$PSItem' and suggests to correct them.
 .DESCRIPTION
-    The full name of the automatic variable $PSItem should be used instead of its alias $_ for consistency.
+    The full name of the automatic variable '$PSItem' should be used instead of its alias '$_' for consistency. Produces
+    warnings of the type 'PSAvoidUsingAutomaticVariableAlias'.
 .EXAMPLE
     Measure-AutomaticVariableAlias -Token $Token
 .INPUTS
@@ -10,7 +11,8 @@
 .OUTPUTS
     [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 .NOTES
-    Inspired by https://github.com/PowerShell/PSScriptAnalyzer/blob/master/Tests/Engine/CommunityAnalyzerRules/CommunityAnalyzerRules.psm1#L613.
+    Inspired by
+    https://github.com/PowerShell/PSScriptAnalyzer/blob/master/Tests/Engine/CommunityAnalyzerRules/CommunityAnalyzerRules.psm1#L613.
 #>
 function Measure-AutomaticVariableAlias
 {

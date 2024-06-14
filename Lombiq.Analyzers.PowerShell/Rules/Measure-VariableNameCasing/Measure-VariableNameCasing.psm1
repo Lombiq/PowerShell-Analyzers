@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Detects inconsitencies in the casing of parameter names and variable names (including automatic variables).
+    Detects inconsistencies in the casing of parameter names and variable names (including automatic variables).
 .DESCRIPTION
     Raises the following warnings regarding the casing of parameter names and variable names (including automatic
     variables):

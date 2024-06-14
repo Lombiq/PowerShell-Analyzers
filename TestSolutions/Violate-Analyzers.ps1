@@ -1,7 +1,8 @@
-function Violate-Analyzers()
+function Violate-Analyzers($parameter = $LastExitCode)
 {
-    if (!$false) {
-        Write-Host 'This file contains intentionally bad code to verify that PSScriptAnalyzer works correctly.'
+    $Message = 'This file contains intentionally bad code to verify that PSScriptAnalyzer works correctly.'
+    if (!$Parameter) {
+        Write-Host $message
     }
 }
 

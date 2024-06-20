@@ -47,7 +47,7 @@ function Measure-VariableNameCasing
             '$PSCulture', '$PSDebugContext', '$PSEdition', '$PSHOME', '$PSItem', '$PSScriptRoot', '$PSSenderInfo',
             '$PSUICulture', '$PSVersionTable', '$PWD', '$Sender', '$ShellId', '$StackTrace', '$switch', '$this', '$true')
 
-        $analyzerViolations = @()
+        $analyzerViolations = New-Object System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]
 
         try
         {
@@ -94,8 +94,9 @@ function Measure-VariableNameCasing
                 $variableName = $PSItem.Extent.Text
 
                 $automaticVariable = $automaticVariableNames | Where-Object {
-                    $PSItem.ToLowerInvariant() -eq $variableName.ToLowerInvariant() } | Select-Object -First 1
+                    $PSItem -eq $variableName } | Select-Object -First 1
 
+                # The '-ceq' operator should work here, but it doesn't.
                 if ($null -ne $automaticVariable -and -not $automaticVariable.Equals($variableName, 'InvariantCulture'))
                 {
                     $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{

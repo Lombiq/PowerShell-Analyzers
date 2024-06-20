@@ -13,12 +13,16 @@
     - PSUseCorrectVariableNameCasing: Variable names should contain only alphanumeric characters and start with a
       lowercase letter.
 .EXAMPLE
-    Measure-VariableNameCasing -Token $Token
+    Measure-VariableNameCasing -Ast $Ast
 .INPUTS
-    [System.Management.Automation.Language.Token[]]
+    [System.Management.Automation.Language.ScriptBlockAst]
 .OUTPUTS
     [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]]
 #>
+
+using namespace System.Management.Automation.Language
+
+Import-Module (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) '..\AstFunctions.ps1') -Force
 
 function Measure-VariableNameCasing
 {
@@ -28,224 +32,98 @@ function Measure-VariableNameCasing
     (
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
-        [System.Management.Automation.Language.Token[]]
-        $Token
+        [System.Management.Automation.Language.ScriptBlockAst]
+        $Ast
     )
 
     Process
     {
         # See https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables.
         $automaticVariableNames = (
-            '$', '?', '^', '_', 'args', 'ConsoleFileName', 'EnabledExperimentalFeatures', 'Error', 'Event', 'EventArgs',
-            'EventSubscriber', 'ExecutionContext', 'false', 'foreach', 'HOME', 'Host', 'input', 'IsCoreCLR', 'IsLinux',
-            'IsMacOS', 'IsWindows', 'LASTEXITCODE', 'Matches', 'MyInvocation', 'NestedPromptLevel', 'null', 'PID',
-            'PROFILE', 'PSBoundParameters', 'PSCmdlet', 'PSCommandPath', 'PSCulture', 'PSDebugContext', 'PSEdition',
-            'PSHOME', 'PSItem', 'PSScriptRoot', 'PSSenderInfo', 'PSUICulture', 'PSVersionTable', 'PWD', 'Sender',
-            'ShellId', 'StackTrace', 'switch', 'this', 'true')
+            '$$', '$?', '$^', '$_', '$args', '$ConsoleFileName', '$EnabledExperimentalFeatures', '$Error', '$Event',
+            '$EventArgs', '$EventSubscriber', '$ExecutionContext', '$false', '$foreach', '$HOME', '$Host', '$input',
+            '$IsCoreCLR', '$IsLinux', '$IsMacOS', '$IsWindows', '$LASTEXITCODE', '$Matches', '$MyInvocation',
+            '$NestedPromptLevel', '$null', '$PID', '$PROFILE', '$PSBoundParameters', '$PSCmdlet', '$PSCommandPath',
+            '$PSCulture', '$PSDebugContext', '$PSEdition', '$PSHOME', '$PSItem', '$PSScriptRoot', '$PSSenderInfo',
+            '$PSUICulture', '$PSVersionTable', '$PWD', '$Sender', '$ShellId', '$StackTrace', '$switch', '$this', '$true')
 
         $analyzerViolations = @()
 
-        $parameterNames = @()
-        $parameterBlockFound = $false
-        $parameterBlockParenthesisDepth = 0
-        $parameterBlockProcessed = $false
-
         try
         {
-            for ($i = 0; $i -lt $Token.Count; $i++)
-            {
-                $currentToken = $Token[$i]
+            $rootIndex = '$'
+            $functionParameters = @{}
+            $functionParameters[$rootIndex] = @()
 
-                # *******
-                # STEP 0: Find a function token and reset the state.
-                # *******
+            Find-AstParameters -AstObject $Ast | ForEach-Object { $functionParameters[$rootIndex] += $PSItem.Name.Extent.Text }
 
-                if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Function)
+            $functions = $ast.FindAll(
                 {
-                    $parameterNames = @()
-                    $parameterBlockFound = $false
-                    $parameterBlockProcessed = $false
+                    param([Ast] $AstObject)
+                    return ($AstObject -is [FunctionDefinitionAst])
+                },
+                $true
+            )
 
-                    # *******
-                    # STEP 1: Detect the inline parameter block.
-                    # *******
+            $functions | ForEach-Object {
+                $functionName = $PSItem.Name
+                Find-AstParameters -AstObject $PSItem | ForEach-Object { $functionParameters[$functionName] += $PSItem.Name.Extent.Text }
+            }
 
-                    # The token immediately following the function token is the function name. If the one following that
-                    # is LParen, then the parameter block is inline.
-                    if ($Token[$i + 2].Kind -eq [System.Management.Automation.Language.TokenKind]::LParen)
-                    {
-                        $parameterBlockFound = $true
-                        $i++ # Skip the function name token.
-                    }
+            $functionParametersWithParents = @{}
+            $functionParametersWithParents[$rootIndex] = $functionParameters[$rootIndex]
+            $functions | ForEach-Object {
+                $functionName = $PSItem.Name
 
-                    continue
+                $parents = Find-AstParents -AstObject $PSItem -ParentType ([FunctionDefinitionAst])
+
+                $functionParametersWithParents[$functionName] += $functionParameters[$rootIndex]
+                $functionParametersWithParents[$functionName] += $functionParameters[$functionName]
+                $parents | Select-Object -ExpandProperty Name | ForEach-Object {
+                    $functionParametersWithParents[$functionName] += $functionParameters[$PSItem]
                 }
+            }
 
-                # *******
-                # STEP 2: Detect the normal parameter block that starts with the Param token.
-                # *******
-
-                # If we haven't a found parameter block yet (inline or not), then look for the Param token.
-                if (-not $parameterBlockFound -and -not $parameterBlockProcessed -and
-                    $currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Param)
+            $Ast.FindAll(
                 {
-                    $parameterBlockFound = $true
+                    param([Ast] $AstObject)
+                    return ($AstObject -is [VariableExpressionAst])
+                },
+                $true
+            ) | ForEach-Object {
+                $variableName = $PSItem.Extent.Text
 
-                    continue
-                }
+                $automaticVariable = $automaticVariableNames | Where-Object {
+                    $PSItem.ToLowerInvariant() -eq $variableName.ToLowerInvariant() } | Select-Object -First 1
 
-                # *******
-                # STEP 3: Process the parameter block.
-                # *******
-
-                if ($parameterBlockFound -and -not $parameterBlockProcessed)
+                if ($null -ne $automaticVariable -and -not $automaticVariable.Equals($variableName, 'InvariantCulture'))
                 {
-                    # Find '('-like tokens to increase the parenthesis depth.
-                    if ($currentToken.Kind -in @(
-                            [System.Management.Automation.Language.TokenKind]::AtParen
-                            [System.Management.Automation.Language.TokenKind]::DollarParen
-                            [System.Management.Automation.Language.TokenKind]::LParen
-                        ))
-                    {
-                        $parameterBlockParenthesisDepth++
-
-                        continue
-                    }
-
-                    # Find ')' tokens to decrease the parenthesis depth.
-                    if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::RParen)
-                    {
-                        $parameterBlockParenthesisDepth--
-
-                        # If the parenthesis depth reaches 0, we have reached the end of the parameter block.
-                        if ($parameterBlockParenthesisDepth -eq 0)
-                        {
-                            $parameterBlockProcessed = $true
-                        }
-
-                        continue
-                    }
-
-                    # If we are inside the parameter list and the parenthesis depth is 1, we are looking at parameter
-                    # names.
-                    if ($parameterBlockParenthesisDepth -eq 1 -and
-                        $currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Variable -and
-                        $automaticVariableNames -notcontains $currentToken.Name)
-                    {
-                        $parameterNames += $currentToken.Name
-
-                        # If the parameter name is not in the correct format, add a diagnostic record.
-                        if ($currentToken.Text -NotMatch '(?-i)^\$[A-Z][a-zA-Z0-9]*')
-                        {
-                            $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-                                'Extent' = $currentToken.Extent
-                                'Message' = @(
-                                    'Parameter names should contain only alphanumeric characters and start with an'
-                                    "uppercase letter: '$($currentToken.Text)'."
-                                ) -join ' '
-                                'RuleName' = 'PSUseCorrectParameterNameCasing'
-                                'RuleSuppressionID' = 'PSUseCorrectParameterNameCasing'
-                                'Severity' = 'Warning'
-                            }
-                        }
+                    $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                        'Extent' = $PSItem.Extent
+                        'Message' = @(
+                            "Automatic variables should be used with the correct casing: '$automaticVariable'"
+                            "instead of '$variableName'."
+                        ) -join ' '
+                        'RuleName' = 'PSUseCorrectAutomaticVariableNameCasing'
+                        'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'
+                        'Severity' = 'Warning'
                     }
                 }
 
-                # *******
-                # STEP 4: Find variables inside the function body and check their names against the automatic variables,
-                # the known parameters and the correct format.
-                # *******
+                $nearestParentFunction = (Find-AstNearestParent -AstObject $PSItem -ParentType ([FunctionDefinitionAst]))
 
-                if ($currentToken.Kind -eq [System.Management.Automation.Language.TokenKind]::Variable)
+                if ([string]::IsNullOrEmpty($nearestParentFunction))
                 {
-                    # Skip path-like expressions, such as $Env:SOMETHING, as they produce false positives.
-                    if ($currentToken.Text.Contains(':'))
-                    {
-                        continue
-                    }
+                    $nearestParentFunctionName = $rootIndex
+                }
+                else
+                {
+                    $nearestParentFunctionName = $nearestParentFunction.Name
+                }
 
-                    # *******
-                    # STEP 4.1: Find automatic variables that are used with the wrong casing.
-                    # *******
-
-                    $automaticVariable = $automaticVariableNames | Where-Object {
-                        $PSItem.ToLowerInvariant() -eq $currentToken.Name.ToLowerInvariant() } | Select-Object -First 1
-
-                    if ($null -ne $automaticVariable)
-                    {
-                        if (-not $automaticVariable.Equals($currentToken.Name, 'InvariantCulture'))
-                        {
-                            $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-                                'Extent' = $currentToken.Extent
-                                'Message' = @(
-                                    "Automatic variables should be used with the correct casing: '`$$automaticVariable'"
-                                    "instead of '$($currentToken.Text)'."
-                                ) -join ' '
-                                'RuleName' = 'PSUseCorrectAutomaticVariableNameCasing'
-                                'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'
-                                'Severity' = 'Warning'
-                            }
-                        }
-
-                        continue
-                    }
-
-                    # When we are inside a parameter block, we don't need to validate against rules for variables.
-                    if ($parameterBlockFound -and -not $parameterBlockProcessed)
-                    {
-                        continue
-                    }
-
-                    # *******
-                    # STEP 4.2: Find parameters that are used with the wrong casing.
-                    # *******
-
-                    # If we found parameters, then check the variable name against them.
-                    if ($parameterNames.Length -gt 0)
-                    {
-                        # Find a parameter with the same name as the current token regardless of the casing.
-                        $parameter = $parameterNames | Where-Object { $PSItem -eq $currentToken.Name } | Select-Object -First 1
-
-                        if ($null -ne $parameter)
-                        {
-                            # The variable name's casing is different from the parameter's.
-                            if (-not $parameter.Equals($currentToken.Name, 'InvariantCulture'))
-                            {
-                                $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-                                    'Extent' = $currentToken.Extent
-                                    'Message' = @(
-                                        "Parameters should be used with the declared casing: '`$$parameter' instead of"
-                                        "'$($currentToken.Text)'."
-                                    ) -join ' '
-                                    'RuleName' = 'PSUseParameterNameDeclaredCasing'
-                                    'RuleSuppressionID' = 'PSUseParameterNameDeclaredCasing'
-                                    'Severity' = 'Warning'
-                                }
-                            }
-
-                            continue
-                        }
-                    }
-
-                    # *******
-                    # STEP 4.3: Find variables that are used with the wrong casing.
-                    # *******
-
-                    if ($currentToken.Text -NotMatch '(?-i)^\$[a-z][a-zA-Z0-9]*')
-                    {
-                        $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-                            'Extent' = $currentToken.Extent
-                            'Message' = @(
-                                'Variable names should contain only alphanumeric characters and start with a'
-                                "lowercase letter: '$($currentToken.Text)'."
-                            ) -join ' '
-                            'RuleName' = 'PSUseCorrectVariableNameCasing'
-                            'RuleSuppressionID' = 'PSUseCorrectVariableNameCasing'
-                            'Severity' = 'Warning'
-                        }
-
-                        continue
-                    }
+                if ($variableName -NotMatch '(?-i)^\$[a-z].*' -and $functionParametersWithParents[$nearestParentFunctionName] -notcontains $variableName)
+                {
+                    Write-Warning "$($variableName) line $($PSItem.Extent.StartLineNumber) column $($PSItem.Extent.StartColumnNumber)"
                 }
             }
 

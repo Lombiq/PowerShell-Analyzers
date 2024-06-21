@@ -38,6 +38,15 @@ function Measure-VariableNameCasing
 
     Process
     {
+        $analyzerViolations = New-Object System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]
+
+        # This analyzer can and should analyze the whole file only, especially if it has embedded functions, because it
+        # needs to keep track of parameters declared in the root and the parent functions of a given function.
+        if ($Ast.Extent.StartLineNumber -ne 1 -or $Ast.Extent.StartColumnNumber -ne 1)
+        {
+            return $analyzerViolations
+        }
+
         # See https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables.
         $automaticVariableNames = (
             '$$', '$?', '$^', '$_', '$args', '$ConsoleFileName', '$EnabledExperimentalFeatures', '$Error', '$Event',
@@ -46,8 +55,6 @@ function Measure-VariableNameCasing
             '$NestedPromptLevel', '$null', '$PID', '$PROFILE', '$PSBoundParameters', '$PSCmdlet', '$PSCommandPath',
             '$PSCulture', '$PSDebugContext', '$PSEdition', '$PSHOME', '$PSItem', '$PSScriptRoot', '$PSSenderInfo',
             '$PSUICulture', '$PSVersionTable', '$PWD', '$Sender', '$ShellId', '$StackTrace', '$switch', '$this', '$true')
-
-        $analyzerViolations = New-Object System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]
 
         try
         {

@@ -1,4 +1,4 @@
-<#
+﻿<#
 .SYNOPSIS
     Detects inconsistencies in the casing of parameter names and variable names (including automatic variables).
 .DESCRIPTION

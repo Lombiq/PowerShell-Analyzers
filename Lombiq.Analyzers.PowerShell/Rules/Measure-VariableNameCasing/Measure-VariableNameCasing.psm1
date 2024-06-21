@@ -4,14 +4,18 @@
 .DESCRIPTION
     Raises the following warnings regarding the casing of parameter names and variable names (including automatic
     variables):
-    - PSUseCorrectParameterNameCasing: Parameter names should contain only alphanumeric characters and start with an
-      uppercase letter.
     - PSUseCorrectAutomaticVariableNameCasing: Automatic variables should be used with the casing according to the
       documentation:
       https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables.
+    - PSUseCorrectParameterNameCasing: Parameter names should contain only alphanumeric characters and start with an
+      uppercase letter.
     - PSUseParameterNameDeclaredCasing: Parameters should be used with the declared casing.
     - PSUseCorrectVariableNameCasing: Variable names should contain only alphanumeric characters and start with a
       lowercase letter.
+
+    When fixing warnings, work through the rules in the order they are listed above, because violating
+    PSUseCorrectParameterNameCasing, while referencing that parameter with the correct casing, will also raise a
+    PSUseParameterNameDeclaredCasing warning. The latter will disappear after fixing the former.
 .EXAMPLE
     Measure-VariableNameCasing -Ast $Ast
 .INPUTS

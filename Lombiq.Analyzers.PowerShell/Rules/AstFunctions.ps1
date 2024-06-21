@@ -1,10 +1,11 @@
 using namespace System.Management.Automation.Language
 
+# Traverse the chain of parents of an AST object until a parent of a specific type is found.
 function Find-AstNearestParent
 {
     param(
-        [Ast] $AstObject,
-        [Type] $ParentType
+        [Parameter(Mandatory = $true)] [Ast] $AstObject,
+        [Parameter(Mandatory = $true)] [Type] $ParentType
     )
 
     $parent = $AstObject.Parent
@@ -16,12 +17,16 @@ function Find-AstNearestParent
     return $parent
 }
 
+# Traverse the chain of parents of an AST object to extract each parent of a specific type.
 function Find-AstParents
 {
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseSingularNouns', '', Justification = 'This function can return multiple parents.')]
+    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSUseSingularNouns',
+        '',
+        Justification = 'This function can return multiple parents.')]
     param(
-        [Ast] $AstObject,
-        [Type] $ParentType
+        [Parameter(Mandatory = $true)] [Ast] $AstObject,
+        [Parameter(Mandatory = $true)] [Type] $ParentType
     )
 
     $parents = @()
@@ -35,13 +40,14 @@ function Find-AstParents
     return $parents
 }
 
+# Extract the parameters of a script block or a function definition.
 function Find-AstParameters
 {
     [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute(
         'PSUseSingularNouns',
         '',
         Justification = 'This function can return multiple parameters.')]
-    param([Ast] $AstObject)
+    param([Parameter(Mandatory = $true)] [Ast] $AstObject)
 
     $parameters = @()
 

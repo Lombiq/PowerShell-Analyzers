@@ -51,6 +51,7 @@ function Measure-VariableNameCasing
             return $analyzerViolations
         }
 
+        $correctionTypeName = 'Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent'
         # See https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables.
         $automaticVariableNames = (
             '$$', '$?', '$^', '$_', '$args', '$ConsoleFileName', '$EnabledExperimentalFeatures', '$Error', '$Event',
@@ -64,11 +65,14 @@ function Measure-VariableNameCasing
         {
             # The whole script block being analyzed is the root, which we call '€$', since it doesn't have a name.
             $rootIndex = '€$'
-            $functionParameters = @{}
-            $functionParameters[$rootIndex] = @()
+            $allParameters = @()
+            $functionParameterNames = @{}
+            $functionParameterNames[$rootIndex] = @()
 
             # Extract parameters from the root.
-            Find-AstParameters -AstObject $Ast | ForEach-Object { $functionParameters[$rootIndex] += $PSItem.Name.Extent.Text }
+            $rootParameters = Find-AstParameters -AstObject $Ast
+            $allParameters += $rootParameters
+            $rootParameters | ForEach-Object { $functionParameterNames[$rootIndex] += $PSItem.Name.Extent.Text }
 
             # Extract all the functions.
             $functions = $ast.FindAll(
@@ -82,44 +86,60 @@ function Measure-VariableNameCasing
             # Extract the parameters from the functions.
             foreach ($function in $functions)
             {
-                $functionParameters[$function.Name] = @()
+                $functionParameterNames[$function.Name] = @()
 
-                foreach ($parameter in Find-AstParameters -AstObject $function)
+                $functionParameters = Find-AstParameters -AstObject $function
+                $allParameters += $functionParameters
+                foreach ($parameter in $functionParameters)
                 {
-                    $parameterName = $parameter.Name.Extent.Text
+                    $functionParameterNames[$function.Name] += $parameter.Name.Extent.Text
+                }
+            }
 
-                    $functionParameters[$function.Name] += $parameterName
+            # Check all the parameters' names.
+            foreach ($parameter in $allParameters)
+            {
+                $parameterName = $parameter.Name.Extent.Text
 
-                    # Check if the parameter name starts with an uppercase letter.
-                    if ($parameterName -NotMatch '(?-i)^\$[A-Z].*')
-                    {
-                        $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-                            'Extent' = $parameter.Extent
-                            'Message' = "Parameter names should start with an uppercase letter: '$parameterName'."
-                            'RuleName' = 'PSUseCorrectParameterNameCasing'
-                            'RuleSuppressionID' = 'PSUseCorrectParameterNameCasing'
-                            'Severity' = 'Warning'
-                        }
+                # Check if the parameter name starts with an uppercase letter.
+                if ($parameterName -NotMatch '(?-i)^\$[A-Z].*')
+                {
+                    $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
+                        $parameter.Name.Extent
+                        ($parameterName.Substring(0, 1) + $parameterName.Substring(1, 1).ToUpper() + $parameterName.Substring(2))
+                        "Fixed the casing of the parameter name '$parameterName' to start with an uppercase letter."
+                    )
+
+                    $suggestedCorrections = New-Object System.Collections.ObjectModel.Collection[$correctionTypeName]
+                    $suggestedCorrections.add($correctionExtent) | Out-Null
+
+                    $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                        'Extent' = $parameter.Name.Extent
+                        'Message' = "Parameter names should start with an uppercase letter: '$parameterName'."
+                        'RuleName' = 'PSUseCorrectParameterNameCasing'
+                        'RuleSuppressionID' = 'PSUseCorrectParameterNameCasing'
+                        'Severity' = 'Warning'
+                        'SuggestedCorrections' = $suggestedCorrections
                     }
                 }
             }
 
             # Set up a new dictionary that contains the parameters of the functions and their parents (root included).
-            $functionParametersWithParents = @{}
-            $functionParametersWithParents[$rootIndex] = $functionParameters[$rootIndex]
+            $functionParameterNamesWithParents = @{}
+            $functionParameterNamesWithParents[$rootIndex] = $functionParameterNames[$rootIndex]
             foreach ($function in $functions)
             {
                 $parentFunctions = Find-AstParents -AstObject $function -ParentType ([FunctionDefinitionAst])
 
                 # Add the parameters of the function itself.
-                $functionParametersWithParents[$function.Name] += $functionParameters[$function.Name]
+                $functionParameterNamesWithParents[$function.Name] += $functionParameterNames[$function.Name]
                 # Add the parameters of the parent functions.
                 foreach ($parentFunction in $parentFunctions)
                 {
-                    $functionParametersWithParents[$function.Name] += $functionParameters[$parentFunction.Name]
+                    $functionParameterNamesWithParents[$function.Name] += $functionParameterNames[$parentFunction.Name]
                 }
                 # Add the parameters of the root.
-                $functionParametersWithParents[$function.Name] += $functionParameters[$rootIndex]
+                $functionParameterNamesWithParents[$function.Name] += $functionParameterNames[$rootIndex]
             }
 
             # Iterate through each variable expression in the whole AST.
@@ -145,6 +165,15 @@ function Measure-VariableNameCasing
                 {
                     if (-not $automaticVariable.Equals($variableName, 'InvariantCulture'))
                     {
+                        $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
+                            $variable.Extent
+                            $automaticVariable
+                            "Updated the casing of the automatic variable from '$variableName' to '$automaticVariable'."
+                        )
+
+                        $suggestedCorrections = New-Object System.Collections.ObjectModel.Collection[$correctionTypeName]
+                        $suggestedCorrections.add($correctionExtent) | Out-Null
+
                         $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                             'Extent' = $variable.Extent
                             'Message' = @(
@@ -154,6 +183,7 @@ function Measure-VariableNameCasing
                             'RuleName' = 'PSUseCorrectAutomaticVariableNameCasing'
                             'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'
                             'Severity' = 'Warning'
+                            'SuggestedCorrections' = $suggestedCorrections
                         }
                     }
 
@@ -174,7 +204,7 @@ function Measure-VariableNameCasing
                 }
 
                 # Check if the variable is a parameter.
-                $matchingParameter = $functionParametersWithParents[$nearestParentFunctionName] | Where-Object {
+                $matchingParameter = $functionParameterNamesWithParents[$nearestParentFunctionName] | Where-Object {
                     $PSItem -eq $variableName } | Select-Object -First 1
 
                 # If the variable is not a parameter, check if it starts with a lowercase letter.
@@ -182,12 +212,23 @@ function Measure-VariableNameCasing
                 {
                     if ($variableName -NotMatch '(?-i)^\$[a-z].*')
                     {
+                        $correctedVariableName = ($variableName.Substring(0, 1) + $variableName.Substring(1, 1).ToLower() + $variableName.Substring(2))
+                        $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
+                            $variable.Extent
+                            $correctedVariableName
+                            "Updated the casing of the variable from '$variableName' to '$correctedVariableName'."
+                        )
+
+                        $suggestedCorrections = New-Object System.Collections.ObjectModel.Collection[$correctionTypeName]
+                        $suggestedCorrections.add($correctionExtent) | Out-Null
+
                         $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                             'Extent' = $variable.Extent
                             'Message' = "Variable names should start with a lowercase letter: '$variableName'."
                             'RuleName' = 'PSUseCorrectVariableNameCasing'
                             'RuleSuppressionID' = 'PSUseCorrectVariableNameCasing'
                             'Severity' = 'Warning'
+                            'SuggestedCorrections' = $suggestedCorrections
                         }
                     }
 
@@ -197,6 +238,15 @@ function Measure-VariableNameCasing
                 # here, but it doesn't.
                 elseif (-not $matchingParameter.Equals($variableName, 'InvariantCulture'))
                 {
+                    $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
+                        $variable.Extent
+                        $matchingParameter
+                        "Fixed the casing of the variable '$variableName' to match the parameter '$matchingParameter'."
+                    )
+
+                    $suggestedCorrections = New-Object System.Collections.ObjectModel.Collection[$correctionTypeName]
+                    $suggestedCorrections.add($correctionExtent) | Out-Null
+
                     $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                         'Extent' = $variable.Extent
                         'Message' = @(
@@ -206,6 +256,7 @@ function Measure-VariableNameCasing
                         'RuleName' = 'PSUseParameterNameDeclaredCasing'
                         'RuleSuppressionID' = 'PSUseParameterNameDeclaredCasing'
                         'Severity' = 'Warning'
+                        'SuggestedCorrections' = $suggestedCorrections
                     }
 
                     continue

@@ -66,7 +66,7 @@ function Write-FileError([string] $Message, [string] $Path, [int] $Line = 0, [in
     }
     else
     {
-        Write-Error $(if ($Path) { "[$Path|ln ${Line}:${Column}] $Message" } else { $Message })
+        Write-Error $(if ($Path) { "[$Path|ln $($Line):$Column] $Message" } else { $Message })
     }
 }
 

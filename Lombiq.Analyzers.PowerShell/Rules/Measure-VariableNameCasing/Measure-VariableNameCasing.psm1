@@ -77,8 +77,8 @@ function Measure-VariableNameCasing
             # Extract all the functions.
             $functions = $Ast.FindAll(
                 {
-                    param([Ast] $AstObject)
-                    return ($AstObject -is [FunctionDefinitionAst])
+                    param([Ast] $astObject)
+                    return ($astObject -is [FunctionDefinitionAst])
                 },
                 $true
             )
@@ -145,8 +145,8 @@ function Measure-VariableNameCasing
             # Iterate through each variable expression in the whole AST.
             $variables = $Ast.FindAll(
                 {
-                    param([Ast] $AstObject)
-                    return ($AstObject -is [VariableExpressionAst])
+                    param([Ast] $astObject)
+                    return ($astObject -is [VariableExpressionAst])
                 },
                 $true
             )

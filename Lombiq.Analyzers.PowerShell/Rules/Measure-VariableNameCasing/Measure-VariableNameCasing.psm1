@@ -22,7 +22,7 @@
 
 using namespace System.Management.Automation.Language
 
-Import-Module (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) '..\AstFunctions.ps1') -Force
+Import-Module (Join-Path (Split-Path -Path $MyInvocation.MyCommand.Path) '..\AstFunctions.ps1') -Force
 
 function Measure-VariableNameCasing
 {
@@ -51,12 +51,15 @@ function Measure-VariableNameCasing
 
         try
         {
+            # The whole script block being analyzed is the root, which we call '$', since it doesn't have a name.
             $rootIndex = '$'
             $functionParameters = @{}
             $functionParameters[$rootIndex] = @()
 
+            # Extract parameters from the root.
             Find-AstParameters -AstObject $Ast | ForEach-Object { $functionParameters[$rootIndex] += $PSItem.Name.Extent.Text }
 
+            # Extract all the functions.
             $functions = $ast.FindAll(
                 {
                     param([Ast] $AstObject)
@@ -65,11 +68,31 @@ function Measure-VariableNameCasing
                 $true
             )
 
+            # Extract the parameters from the functions.
             $functions | ForEach-Object {
                 $functionName = $PSItem.Name
-                Find-AstParameters -AstObject $PSItem | ForEach-Object { $functionParameters[$functionName] += $PSItem.Name.Extent.Text }
+
+                Find-AstParameters -AstObject $PSItem | ForEach-Object {
+                    $parameter = $PSItem
+                    $parameterName = $parameter.Name.Extent.Text
+
+                    $functionParameters[$functionName] += $parameterName
+
+                    # Check if the parameter name starts with an uppercase letter.
+                    elseif ($variableName -NotMatch '(?-i)^\$[A-Z].*')
+                    {
+                        $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                            'Extent' = $parameter.Extent
+                            'Message' = "Parameter names should start with an uppercase letter: '$parameterName'."
+                            'RuleName' = 'PSUseCorrectParameterNameCasing'
+                            'RuleSuppressionID' = 'PSUseCorrectParameterNameCasing'
+                            'Severity' = 'Warning'
+                        }
+                    }
+                }
             }
 
+            # Set up a new dictionary that contains the parameters of the functions and their parents (root included).
             $functionParametersWithParents = @{}
             $functionParametersWithParents[$rootIndex] = $functionParameters[$rootIndex]
             $functions | ForEach-Object {
@@ -77,13 +100,17 @@ function Measure-VariableNameCasing
 
                 $parents = Find-AstParents -AstObject $PSItem -ParentType ([FunctionDefinitionAst])
 
-                $functionParametersWithParents[$functionName] += $functionParameters[$rootIndex]
+                # Add the parameters of the function itself.
                 $functionParametersWithParents[$functionName] += $functionParameters[$functionName]
+                # Add the parameters of the parent functions.
                 $parents | Select-Object -ExpandProperty Name | ForEach-Object {
                     $functionParametersWithParents[$functionName] += $functionParameters[$PSItem]
                 }
+                # Add the parameters of the root.
+                $functionParametersWithParents[$functionName] += $functionParameters[$rootIndex]
             }
 
+            # Iterate through each variable expression in the whole AST.
             $Ast.FindAll(
                 {
                     param([Ast] $AstObject)
@@ -91,16 +118,19 @@ function Measure-VariableNameCasing
                 },
                 $true
             ) | ForEach-Object {
-                $variableName = $PSItem.Extent.Text
+                $variable = $PSItem
+                $variableName = $variable.Extent.Text
 
+                # Check if the variable is an automatic variable.
                 $automaticVariable = $automaticVariableNames | Where-Object {
                     $PSItem -eq $variableName } | Select-Object -First 1
 
-                # The '-ceq' operator should work here, but it doesn't.
+                # If an automatic variable is found, check if it's used with the correct casing. The '-ceq' operator
+                # should work here, but it doesn't.
                 if ($null -ne $automaticVariable -and -not $automaticVariable.Equals($variableName, 'InvariantCulture'))
                 {
                     $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-                        'Extent' = $PSItem.Extent
+                        'Extent' = $variable.Extent
                         'Message' = @(
                             "Automatic variables should be used with the correct casing: '$automaticVariable'"
                             "instead of '$variableName'."
@@ -109,10 +139,14 @@ function Measure-VariableNameCasing
                         'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'
                         'Severity' = 'Warning'
                     }
+
+                    return
                 }
 
+                # Find the nearest parent function of the variable.
                 $nearestParentFunction = (Find-AstNearestParent -AstObject $PSItem -ParentType ([FunctionDefinitionAst]))
 
+                # If there is no explicit parent function found, then the variable is in the root.
                 if ([string]::IsNullOrEmpty($nearestParentFunction))
                 {
                     $nearestParentFunctionName = $rootIndex
@@ -122,9 +156,42 @@ function Measure-VariableNameCasing
                     $nearestParentFunctionName = $nearestParentFunction.Name
                 }
 
-                if ($variableName -NotMatch '(?-i)^\$[a-z].*' -and $functionParametersWithParents[$nearestParentFunctionName] -notcontains $variableName)
+                # Check if the variable is a parameter.
+                $matchingParameter = $functionParametersWithParents[$nearestParentFunctionName] | Where-Object {
+                    $PSItem -eq $variableName } | Select-Object -First 1
+
+                # If the variable is not a parameter, check if it starts with a lowercase letter.
+                if ($null -eq $matchingParameter)
                 {
-                    Write-Warning "$($variableName) line $($PSItem.Extent.StartLineNumber) column $($PSItem.Extent.StartColumnNumber)"
+                    if ($variableName -NotMatch '(?-i)^\$[a-z].*')
+                    {
+                        $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                            'Extent' = $variable.Extent
+                            'Message' = "Variable names should start with a lowercase letter: '$variableName'."
+                            'RuleName' = 'PSUseCorrectVariableNameCasing'
+                            'RuleSuppressionID' = 'PSUseCorrectVariableNameCasing'
+                            'Severity' = 'Warning'
+                        }
+                    }
+
+                    return
+                }
+                # If a parameter is found, check if it's used with the declared casing. The '-ceq' operator should work
+                # here, but it doesn't.
+                elseif (-not $matchingParameter.Equals($variableName, 'InvariantCulture'))
+                {
+                    $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                        'Extent' = $variable.Extent
+                        'Message' = @(
+                            "Parameters should be used with the declared casing: '`$matchingParameter' instead of"
+                            "'$variableName'."
+                        ) -join ' '
+                        'RuleName' = 'PSUseParameterNameDeclaredCasing'
+                        'RuleSuppressionID' = 'PSUseParameterNameDeclaredCasing'
+                        'Severity' = 'Warning'
+                    }
+
+                    return
                 }
             }
 

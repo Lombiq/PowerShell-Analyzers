@@ -210,7 +210,7 @@ function Measure-VariableNameCasing
                 # If the variable is not a parameter, check if it starts with a lowercase letter.
                 if ($null -eq $matchingParameter)
                 {
-                    if ($variableName -NotMatch '(?-i)^\$[a-z].*')
+                    if ($variableName -NotMatch '(?-i)^[\$@][a-z].*')
                     {
                         $correctedVariableName = ($variableName.Substring(0, 1) + $variableName.Substring(1, 1).ToLower() + $variableName.Substring(2))
                         $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(

@@ -38,10 +38,7 @@ function Measure-AutomaticVariableAlias
             {
                 $correctionTypeName = 'Microsoft.Windows.PowerShell.ScriptAnalyzer.Generic.CorrectionExtent'
                 $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
-                    $automaticVariableAliasToken.Extent.StartLineNumber
-                    $automaticVariableAliasToken.Extent.EndLineNumber
-                    $automaticVariableAliasToken.Extent.StartColumnNumber
-                    $automaticVariableAliasToken.Extent.EndColumnNumber
+                    $automaticVariableAliasToken.Extent
                     '$PSItem'
                     'Replaced the usage of the alias of the automatic variable "$_" with its full name "$PSItem".'
                 )

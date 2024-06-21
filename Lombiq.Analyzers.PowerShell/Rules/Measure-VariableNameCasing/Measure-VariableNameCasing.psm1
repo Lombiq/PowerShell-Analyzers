@@ -200,7 +200,7 @@ function Measure-VariableNameCasing
                     $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                         'Extent' = $variable.Extent
                         'Message' = @(
-                            "Parameters should be used with the declared casing: '`$matchingParameter' instead of"
+                            "Parameters should be used with the declared casing: '$matchingParameter' instead of"
                             "'$variableName'."
                         ) -join ' '
                         'RuleName' = 'PSUseParameterNameDeclaredCasing'

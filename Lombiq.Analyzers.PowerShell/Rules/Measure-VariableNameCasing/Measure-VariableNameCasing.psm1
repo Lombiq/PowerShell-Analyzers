@@ -75,7 +75,7 @@ function Measure-VariableNameCasing
             $rootParameters | ForEach-Object { $functionParameterNames[$rootIndex] += $PSItem.Name.Extent.Text }
 
             # Extract all the functions.
-            $functions = $ast.FindAll(
+            $functions = $Ast.FindAll(
                 {
                     param([Ast] $AstObject)
                     return ($AstObject -is [FunctionDefinitionAst])

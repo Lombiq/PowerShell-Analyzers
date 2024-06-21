@@ -100,13 +100,14 @@ function Measure-VariableNameCasing
             foreach ($parameter in $allParameters)
             {
                 $parameterName = $parameter.Name.Extent.Text
+                $firstLetterIndex = [Math]::Max($parameterName.IndexOf('$'), $parameterName.IndexOf('{')) + 1
 
                 # Check if the parameter name starts with an uppercase letter.
-                if ($parameterName -NotMatch '(?-i)^\$[A-Z].*')
+                if ($parameterName -NotMatch '(?-i)^\$\{?[A-Z].*')
                 {
                     $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
                         $parameter.Name.Extent
-                        ($parameterName.Substring(0, 1) + $parameterName.Substring(1, 1).ToUpper() + $parameterName.Substring(2))
+                        ($parameterName.Substring(0, $firstLetterIndex) + $parameterName.Substring($firstLetterIndex, 1).ToUpper() + $parameterName.Substring($firstLetterIndex + 1))
                         "Fixed the casing of the parameter name '$parameterName' to start with an uppercase letter."
                     )
 
@@ -155,6 +156,12 @@ function Measure-VariableNameCasing
             {
                 $variableName = $variable.Extent.Text
 
+                # Skip path-like expressions, including environment variables.
+                if ($variableName.Contains(':'))
+                {
+                    continue
+                }
+
                 # Check if the variable is an automatic variable.
                 $automaticVariable = $automaticVariableNames | Where-Object {
                     $PSItem -eq $variableName } | Select-Object -First 1
@@ -190,6 +197,22 @@ function Measure-VariableNameCasing
                     continue
                 }
 
+                # Setting up helper variables to check variable names with or without braces, e.g., $variableName or
+                # ${variableName}.
+                $firstLetterIndex = [Math]::Max($variableName.IndexOf('$'), $variableName.IndexOf('{')) + 1
+                $variableNameHasBraces = $variableName.Contains('{')
+                $bracelessVariableName = $bracedVariableName = $null
+                if ($variableNameHasBraces)
+                {
+                    $bracelessVariableName = $variableName.Replace('{', '').Replace('}', '')
+                    $bracedVariableName = $variableName
+                }
+                else
+                {
+                    $bracelessVariableName = $variableName
+                    $bracedVariableName = '${' + $variableName.Substring(1) + '}'
+                }
+
                 # Find the nearest parent function of the variable.
                 $nearestParentFunction = (Find-AstNearestParent -AstObject $variable -ParentType ([FunctionDefinitionAst]))
 
@@ -205,14 +228,14 @@ function Measure-VariableNameCasing
 
                 # Check if the variable is a parameter.
                 $matchingParameter = $functionParameterNamesWithParents[$nearestParentFunctionName] | Where-Object {
-                    $PSItem -eq $variableName } | Select-Object -First 1
+                    $PSItem -eq $bracelessVariableName -or $PSItem -eq $bracedVariableName } | Select-Object -First 1
 
                 # If the variable is not a parameter, check if it starts with a lowercase letter.
                 if ($null -eq $matchingParameter)
                 {
-                    if ($variableName -NotMatch '(?-i)^[\$@][a-z].*')
+                    if ($variableName -NotMatch '(?-i)^[\$@]{?[a-z].*')
                     {
-                        $correctedVariableName = ($variableName.Substring(0, 1) + $variableName.Substring(1, 1).ToLower() + $variableName.Substring(2))
+                        $correctedVariableName = ($variableName.Substring(0, $firstLetterIndex) + $variableName.Substring($firstLetterIndex, 1).ToLower() + $variableName.Substring($firstLetterIndex + 1))
                         $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
                             $variable.Extent
                             $correctedVariableName
@@ -236,7 +259,8 @@ function Measure-VariableNameCasing
                 }
                 # If a parameter is found, check if it's used with the declared casing. The '-ceq' operator should work
                 # here, but it doesn't.
-                elseif (-not $matchingParameter.Equals($variableName, 'InvariantCulture'))
+                elseif (-not $matchingParameter.Equals($bracelessVariableName, 'InvariantCulture') -and
+                    -not $matchingParameter.Equals($bracedVariableName, 'InvariantCulture'))
                 {
                     $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
                         $variable.Extent

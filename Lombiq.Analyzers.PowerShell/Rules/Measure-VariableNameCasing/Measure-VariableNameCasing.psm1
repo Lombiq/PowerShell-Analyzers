@@ -51,8 +51,8 @@ function Measure-VariableNameCasing
 
         try
         {
-            # The whole script block being analyzed is the root, which we call '$', since it doesn't have a name.
-            $rootIndex = '$'
+            # The whole script block being analyzed is the root, which we call '€$', since it doesn't have a name.
+            $rootIndex = '€$'
             $functionParameters = @{}
             $functionParameters[$rootIndex] = @()
 
@@ -69,17 +69,18 @@ function Measure-VariableNameCasing
             )
 
             # Extract the parameters from the functions.
-            $functions | ForEach-Object {
-                $functionName = $PSItem.Name
+            foreach ($function in $functions)
+            {
+                $functionParameters[$function.Name] = @()
 
-                Find-AstParameters -AstObject $PSItem | ForEach-Object {
-                    $parameter = $PSItem
+                foreach ($parameter in Find-AstParameters -AstObject $function)
+                {
                     $parameterName = $parameter.Name.Extent.Text
 
-                    $functionParameters[$functionName] += $parameterName
+                    $functionParameters[$function.Name] += $parameterName
 
                     # Check if the parameter name starts with an uppercase letter.
-                    elseif ($variableName -NotMatch '(?-i)^\$[A-Z].*')
+                    if ($parameterName -NotMatch '(?-i)^\$[A-Z].*')
                     {
                         $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                             'Extent' = $parameter.Extent
@@ -95,30 +96,32 @@ function Measure-VariableNameCasing
             # Set up a new dictionary that contains the parameters of the functions and their parents (root included).
             $functionParametersWithParents = @{}
             $functionParametersWithParents[$rootIndex] = $functionParameters[$rootIndex]
-            $functions | ForEach-Object {
-                $functionName = $PSItem.Name
-
-                $parents = Find-AstParents -AstObject $PSItem -ParentType ([FunctionDefinitionAst])
+            foreach ($function in $functions)
+            {
+                $parentFunctions = Find-AstParents -AstObject $function -ParentType ([FunctionDefinitionAst])
 
                 # Add the parameters of the function itself.
-                $functionParametersWithParents[$functionName] += $functionParameters[$functionName]
+                $functionParametersWithParents[$function.Name] += $functionParameters[$function.Name]
                 # Add the parameters of the parent functions.
-                $parents | Select-Object -ExpandProperty Name | ForEach-Object {
-                    $functionParametersWithParents[$functionName] += $functionParameters[$PSItem]
+                foreach ($parentFunction in $parentFunctions)
+                {
+                    $functionParametersWithParents[$function.Name] += $functionParameters[$parentFunction.Name]
                 }
                 # Add the parameters of the root.
-                $functionParametersWithParents[$functionName] += $functionParameters[$rootIndex]
+                $functionParametersWithParents[$function.Name] += $functionParameters[$rootIndex]
             }
 
             # Iterate through each variable expression in the whole AST.
-            $Ast.FindAll(
+            $variables = $Ast.FindAll(
                 {
                     param([Ast] $AstObject)
                     return ($AstObject -is [VariableExpressionAst])
                 },
                 $true
-            ) | ForEach-Object {
-                $variable = $PSItem
+            )
+
+            foreach ($variable in $variables)
+            {
                 $variableName = $variable.Extent.Text
 
                 # Check if the variable is an automatic variable.
@@ -127,24 +130,27 @@ function Measure-VariableNameCasing
 
                 # If an automatic variable is found, check if it's used with the correct casing. The '-ceq' operator
                 # should work here, but it doesn't.
-                if ($null -ne $automaticVariable -and -not $automaticVariable.Equals($variableName, 'InvariantCulture'))
+                if ($null -ne $automaticVariable)
                 {
-                    $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
-                        'Extent' = $variable.Extent
-                        'Message' = @(
-                            "Automatic variables should be used with the correct casing: '$automaticVariable'"
-                            "instead of '$variableName'."
-                        ) -join ' '
-                        'RuleName' = 'PSUseCorrectAutomaticVariableNameCasing'
-                        'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'
-                        'Severity' = 'Warning'
+                    if (-not $automaticVariable.Equals($variableName, 'InvariantCulture'))
+                    {
+                        $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                            'Extent' = $variable.Extent
+                            'Message' = @(
+                                "Automatic variables should be used with the correct casing: '$automaticVariable'"
+                                "instead of '$variableName'."
+                            ) -join ' '
+                            'RuleName' = 'PSUseCorrectAutomaticVariableNameCasing'
+                            'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'
+                            'Severity' = 'Warning'
+                        }
                     }
 
-                    return
+                    continue
                 }
 
                 # Find the nearest parent function of the variable.
-                $nearestParentFunction = (Find-AstNearestParent -AstObject $PSItem -ParentType ([FunctionDefinitionAst]))
+                $nearestParentFunction = (Find-AstNearestParent -AstObject $variable -ParentType ([FunctionDefinitionAst]))
 
                 # If there is no explicit parent function found, then the variable is in the root.
                 if ([string]::IsNullOrEmpty($nearestParentFunction))
@@ -174,7 +180,7 @@ function Measure-VariableNameCasing
                         }
                     }
 
-                    return
+                    continue
                 }
                 # If a parameter is found, check if it's used with the declared casing. The '-ceq' operator should work
                 # here, but it doesn't.
@@ -191,7 +197,7 @@ function Measure-VariableNameCasing
                         'Severity' = 'Warning'
                     }
 
-                    return
+                    continue
                 }
             }
 

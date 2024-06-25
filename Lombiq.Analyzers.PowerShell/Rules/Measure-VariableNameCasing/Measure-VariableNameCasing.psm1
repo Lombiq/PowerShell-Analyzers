@@ -155,7 +155,7 @@ function Measure-VariableNameCasing
                 $variableName = $variable.Extent.Text
 
                 # Skip path-like expressions, including environment variables.
-                if ($variableName.Contains(':'))
+                if (-not $variableName.StartsWith('${') -and $variableName.Contains(':'))
                 {
                     continue
                 }

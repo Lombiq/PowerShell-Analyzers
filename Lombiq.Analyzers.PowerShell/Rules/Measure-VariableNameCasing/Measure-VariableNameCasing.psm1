@@ -7,11 +7,9 @@
     - PSUseCorrectAutomaticVariableNameCasing: Automatic variables should be used with the casing according to the
       documentation:
       https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables.
-    - PSUseCorrectParameterNameCasing: Parameter names should contain only alphanumeric characters and start with an
-      uppercase letter.
+    - PSUseCorrectParameterNameCasing: Parameter names should start with an uppercase letter.
     - PSUseParameterNameDeclaredCasing: Parameters should be used with the declared casing.
-    - PSUseCorrectVariableNameCasing: Variable names should contain only alphanumeric characters and start with a
-      lowercase letter.
+    - PSUseCorrectVariableNameCasing: Variable names should start with a lowercase letter.
 
     When fixing warnings, work through the rules in the order they are listed above, because violating
     PSUseCorrectParameterNameCasing, while referencing that parameter with the correct casing, will also raise a
@@ -190,8 +188,8 @@ function Measure-VariableNameCasing
                         $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                             'Extent' = $variable.Extent
                             'Message' = @(
-                                "Automatic variables should be used with the correct casing: '$automaticVariable'"
-                                "instead of '$variableName'."
+                                'Automatic variables should be used with the casing according to the documentation:'
+                                "'$automaticVariable' instead of '$variableName'."
                             ) -join ' '
                             'RuleName' = 'PSUseCorrectAutomaticVariableNameCasing'
                             'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'

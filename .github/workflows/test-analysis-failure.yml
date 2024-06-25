@@ -27,9 +27,9 @@ jobs:
         PSPlaceOpenBrace: Open brace is not on a new line.
         PSUseApprovedVerbs: The cmdlet 'Violate-Analyzers' uses an unapproved verb.
         PSUseConsistentIndentation: Indentation not consistent
-        PSUseCorrectAutomaticVariableNameCasing: Automatic variables should be used with the correct casing
-        PSUseCorrectParameterNameCasing: Parameter names should contain only alphanumeric characters and start with an uppercase letter
-        PSUseCorrectVariableNameCasing: Variable names should contain only alphanumeric characters and start with a lowercase letter
+        PSUseCorrectAutomaticVariableNameCasing: Automatic variables should be used with the casing according to the documentation
+        PSUseCorrectParameterNameCasing: Parameter names should start with an uppercase letter
+        PSUseCorrectVariableNameCasing: Variable names should start with a lowercase letter
         PSUseParameterNameDeclaredCasing: Parameters should be used with the declared casing
         PSUseSingularNouns: The cmdlet 'Violate-Analyzers' uses a plural noun.
 
@@ -52,8 +52,8 @@ jobs:
         PSPlaceOpenBrace: Open brace is not on a new line.
         PSUseApprovedVerbs: The cmdlet 'Violate-Analyzers' uses an unapproved verb.
         PSUseConsistentIndentation: Indentation not consistent
-        PSUseCorrectAutomaticVariableNameCasing: Automatic variables should be used with the correct casing
-        PSUseCorrectParameterNameCasing: Parameter names should contain only alphanumeric characters and start with an uppercase letter
-        PSUseCorrectVariableNameCasing: Variable names should contain only alphanumeric characters and start with a lowercase letter
+        PSUseCorrectAutomaticVariableNameCasing: Automatic variables should be used with the casing according to the documentation
+        PSUseCorrectParameterNameCasing: Parameter names should start with an uppercase letter
+        PSUseCorrectVariableNameCasing: Variable names should start with a lowercase letter
         PSUseParameterNameDeclaredCasing: Parameters should be used with the declared casing
         PSUseSingularNouns: The cmdlet 'Violate-Analyzers' uses a plural noun.

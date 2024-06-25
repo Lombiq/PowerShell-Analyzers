@@ -4,16 +4,15 @@
 .DESCRIPTION
     Raises the following warnings regarding the casing of parameter names and variable names (including automatic
     variables):
-    - PSUseCorrectAutomaticVariableNameCasing: Automatic variables should be used with the casing according to the
-      documentation:
+    - PSUseCorrectAutomaticVariableNames: Automatic variables should be used exactly as they are documented:
       https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables.
     - PSUseCorrectParameterNameCasing: Parameter names should start with an uppercase letter.
-    - PSUseParameterNameDeclaredCasing: Parameters should be used with the declared casing.
     - PSUseCorrectVariableNameCasing: Variable names should start with a lowercase letter.
+    - PSUseParametersAsDeclared: Parameters should be used with exactly as they were declared.
 
     When fixing warnings, work through the rules in the order they are listed above, because violating
     PSUseCorrectParameterNameCasing, while referencing that parameter with the correct casing, will also raise a
-    PSUseParameterNameDeclaredCasing warning. The latter will disappear after fixing the former.
+    PSUseParametersAsDeclared warning. The latter will disappear after fixing the former.
 .EXAMPLE
     Measure-VariableNameCasing -Ast $Ast
 .INPUTS
@@ -81,7 +80,7 @@ function Measure-VariableNameCasing
                 $true
             )
 
-            # Extract the parameters from the functions.
+            # Extract the parameters from the functions and put them into a dictionary with the function names as keys.
             foreach ($function in $functions)
             {
                 $functionParameterNames[$function.Name] = @()
@@ -106,7 +105,7 @@ function Measure-VariableNameCasing
                     $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
                         $parameter.Name.Extent
                         ($parameterName.Substring(0, $firstLetterIndex) + $parameterName.Substring($firstLetterIndex, 1).ToUpper() + $parameterName.Substring($firstLetterIndex + 1))
-                        "Fixed the casing of the parameter name '$parameterName' to start with an uppercase letter."
+                        "Corrected the casing of the parameter name '$parameterName' to start with an uppercase letter."
                     )
 
                     $suggestedCorrections = New-Object System.Collections.ObjectModel.Collection[$correctionTypeName]
@@ -161,14 +160,20 @@ function Measure-VariableNameCasing
                     continue
                 }
 
-                # Skip variable expressions enclosed in braces.
-                if ($variableName.Contains('{'))
+                # Produce a variable name that is the opposite of '$variableName' in terms of having braces or not.
+                $inverseBracedVariableName = $null
+                if ($variableName.StartsWith('${'))
                 {
-                    continue
+                    $inverseBracedVariableName = '$' + $variableName.Substring(2, $variableName.Length - 3)
+                }
+                else
+                {
+                    $inverseBracedVariableName = '${' + $variableName.Substring(1) + '}'
                 }
 
                 # Check if the variable is an automatic variable.
-                $automaticVariable = $automaticVariableNames | Where-Object { $PSItem -eq $variableName } |
+                $automaticVariable = $automaticVariableNames |
+                    Where-Object { $PSItem -eq $variableName -or $PSItem -eq $inverseBracedVariableName } |
                     Select-Object -First 1
 
                 # If an automatic variable is found, check if it's used with the correct casing. The '-ceq' operator
@@ -180,7 +185,7 @@ function Measure-VariableNameCasing
                         $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
                             $variable.Extent
                             $automaticVariable
-                            "Updated the casing of the automatic variable from '$variableName' to '$automaticVariable'."
+                            "Corrected the usage of the '$variableName' automatic variable to '$automaticVariable'."
                         )
 
                         $suggestedCorrections = New-Object System.Collections.ObjectModel.Collection[$correctionTypeName]
@@ -189,11 +194,11 @@ function Measure-VariableNameCasing
                         $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                             'Extent' = $variable.Extent
                             'Message' = @(
-                                'Automatic variables should be used with the casing according to the documentation:'
+                                'Automatic variables should be used exactly as they are documented:'
                                 "'$automaticVariable' instead of '$variableName'."
                             ) -join ' '
-                            'RuleName' = 'PSUseCorrectAutomaticVariableNameCasing'
-                            'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNameCasing'
+                            'RuleName' = 'PSUseCorrectAutomaticVariableNames'
+                            'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNames'
                             'Severity' = 'Warning'
                             'SuggestedCorrections' = $suggestedCorrections
                         }
@@ -215,9 +220,9 @@ function Measure-VariableNameCasing
                     $nearestParentFunctionName = $nearestParentFunction.Name
                 }
 
-                # Check if the variable is a parameter.
+                # Check if the variable is a parameter, used with or without braces.
                 $matchingParameter = $functionParameterNamesWithParents[$nearestParentFunctionName] | Where-Object {
-                    $PSItem -eq $variableName } | Select-Object -First 1
+                    $PSItem -eq $variableName -or $PSItem -eq $inverseBracedVariableName } | Select-Object -First 1
 
                 # If the variable is not a parameter, check if it starts with a lowercase letter.
                 if ($null -eq $matchingParameter)
@@ -246,8 +251,8 @@ function Measure-VariableNameCasing
 
                     continue
                 }
-                # If a parameter is found, check if it's used with the declared casing. The '-ceq' operator should work
-                # here, but it doesn't.
+                # If a parameter is found, check if it's used exactly as it was declared. The '-ceq' operator should
+                # work here, but it doesn't.
                 elseif (-not $matchingParameter.Equals($variableName, 'InvariantCulture'))
                 {
                     $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
@@ -262,11 +267,11 @@ function Measure-VariableNameCasing
                     $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                         'Extent' = $variable.Extent
                         'Message' = @(
-                            "Parameters should be used with the declared casing: '$matchingParameter' instead of"
-                            "'$variableName'."
+                            "Parameters should be used with exactly as they were declared: '$matchingParameter' instead"
+                            "of '$variableName'."
                         ) -join ' '
-                        'RuleName' = 'PSUseParameterNameDeclaredCasing'
-                        'RuleSuppressionID' = 'PSUseParameterNameDeclaredCasing'
+                        'RuleName' = 'PSUseParametersAsDeclared'
+                        'RuleSuppressionID' = 'PSUseParametersAsDeclared'
                         'Severity' = 'Warning'
                         'SuggestedCorrections' = $suggestedCorrections
                     }

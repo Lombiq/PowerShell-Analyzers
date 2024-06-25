@@ -27,10 +27,10 @@ jobs:
         PSPlaceOpenBrace: Open brace is not on a new line.
         PSUseApprovedVerbs: The cmdlet 'Violate-Analyzers' uses an unapproved verb.
         PSUseConsistentIndentation: Indentation not consistent
-        PSUseCorrectAutomaticVariableNameCasing: Automatic variables should be used with the casing according to the documentation
+        PSUseCorrectAutomaticVariableNames: Automatic variables should be used exactly as they are documented
         PSUseCorrectParameterNameCasing: Parameter names should start with an uppercase letter
         PSUseCorrectVariableNameCasing: Variable names should start with a lowercase letter
-        PSUseParameterNameDeclaredCasing: Parameters should be used with the declared casing
+        PSUseParametersAsDeclared: Parameters should be used with exactly as they were declared
         PSUseSingularNouns: The cmdlet 'Violate-Analyzers' uses a plural noun.
 
   call-test-analysis-failure-local:
@@ -52,8 +52,8 @@ jobs:
         PSPlaceOpenBrace: Open brace is not on a new line.
         PSUseApprovedVerbs: The cmdlet 'Violate-Analyzers' uses an unapproved verb.
         PSUseConsistentIndentation: Indentation not consistent
-        PSUseCorrectAutomaticVariableNameCasing: Automatic variables should be used with the casing according to the documentation
+        PSUseCorrectAutomaticVariableNames: Automatic variables should be used exactly as they are documented
         PSUseCorrectParameterNameCasing: Parameter names should start with an uppercase letter
         PSUseCorrectVariableNameCasing: Variable names should start with a lowercase letter
-        PSUseParameterNameDeclaredCasing: Parameters should be used with the declared casing
+        PSUseParametersAsDeclared: Parameters should be used with exactly as they were declared
         PSUseSingularNouns: The cmdlet 'Violate-Analyzers' uses a plural noun.

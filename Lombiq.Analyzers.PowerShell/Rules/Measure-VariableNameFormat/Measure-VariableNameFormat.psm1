@@ -16,7 +16,7 @@
     parameter with the correct casing or format, will also raise a PSUseParametersAsDeclared warning. The latter will
     disappear after fixing the former(s).
 .EXAMPLE
-    Measure-VariableNameCasing -Ast $Ast
+    Measure-VariableNameFormat -Ast $Ast
 .INPUTS
     [System.Management.Automation.Language.ScriptBlockAst]
 .OUTPUTS
@@ -27,7 +27,7 @@ using namespace System.Management.Automation.Language
 
 Import-Module (Join-Path (Split-Path -Path $MyInvocation.MyCommand.Path) '..\AstFunctions.ps1') -Force
 
-function Measure-VariableNameCasing
+function Measure-VariableNameFormat
 {
     [CmdletBinding()]
     [OutputType([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]

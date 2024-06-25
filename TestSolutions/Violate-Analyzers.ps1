@@ -1,4 +1,4 @@
-function Violate-Analyzers(${parameter} = $LastExitCode)
+﻿function Violate-Analyzers($parameter = $LastExitCode, ${BracedParameter})
 {
     $Message = 'This file contains intentionally bad code to verify that PSScriptAnalyzer works correctly.'
     if (!$Parameter) {

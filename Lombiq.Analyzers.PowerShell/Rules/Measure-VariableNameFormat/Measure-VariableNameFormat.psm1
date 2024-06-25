@@ -166,8 +166,9 @@ function Measure-VariableNameFormat
             {
                 $variableName = $variable.Extent.Text
 
-                # Skip path-like expressions, including environment variables.
-                if (-not $variableName.StartsWith('${') -and $variableName.Contains(':'))
+                # Due to the added complexity vs. their usage frequency, skip scoped variables and path-like
+                # expressions. Also skipping environment variables, where the casing doesn't matter.
+                if ($variableName.Contains(':'))
                 {
                     continue
                 }

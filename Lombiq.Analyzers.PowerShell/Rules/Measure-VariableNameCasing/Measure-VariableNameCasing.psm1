@@ -100,12 +100,19 @@ function Measure-VariableNameCasing
                 $firstLetterIndex = [Math]::Max($parameterName.IndexOf('$'), $parameterName.IndexOf('{')) + 1
 
                 # Check if the parameter name starts with an uppercase letter.
-                if ($parameterName -NotMatch '(?-i)^\$\{?[A-Z].*')
+                if ($parameterName -Match '(?-i)^\$\{?[a-z].*')
                 {
+                    $correctedParameterName = ($parameterName.Substring(0, $firstLetterIndex) +
+                        $parameterName.Substring($firstLetterIndex, 1).ToUpper() +
+                        $parameterName.Substring($firstLetterIndex + 1))
+
                     $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
                         $parameter.Name.Extent
-                        ($parameterName.Substring(0, $firstLetterIndex) + $parameterName.Substring($firstLetterIndex, 1).ToUpper() + $parameterName.Substring($firstLetterIndex + 1))
-                        "Corrected the casing of the parameter name '$parameterName' to start with an uppercase letter."
+                        $correctedParameterName
+                        @(
+                            "Corrected the casing of the parameter name from '$parameterName' to"
+                            "'$correctedParameterName' to start with an uppercase letter."
+                        ) -join ' '
                     )
 
                     $suggestedCorrections = New-Object System.Collections.ObjectModel.Collection[$correctionTypeName]
@@ -113,7 +120,10 @@ function Measure-VariableNameCasing
 
                     $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                         'Extent' = $parameter.Name.Extent
-                        'Message' = "Parameter names should start with an uppercase letter: '$parameterName'."
+                        'Message' = @(
+                            "Parameter names should start with an uppercase letter: '$parameterName' should be"
+                            "'$correctedParameterName'."
+                        ) -join ' '
                         'RuleName' = 'PSUseCorrectParameterNameCasing'
                         'RuleSuppressionID' = 'PSUseCorrectParameterNameCasing'
                         'Severity' = 'Warning'
@@ -194,8 +204,8 @@ function Measure-VariableNameCasing
                         $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                             'Extent' = $variable.Extent
                             'Message' = @(
-                                'Automatic variables should be used exactly as they are documented:'
-                                "'$automaticVariable' instead of '$variableName'."
+                                "Automatic variables should be used exactly as they are documented: '$variableName'"
+                                "should be '$automaticVariable'."
                             ) -join ' '
                             'RuleName' = 'PSUseCorrectAutomaticVariableNames'
                             'RuleSuppressionID' = 'PSUseCorrectAutomaticVariableNames'
@@ -227,13 +237,17 @@ function Measure-VariableNameCasing
                 # If the variable is not a parameter, check if it starts with a lowercase letter.
                 if ($null -eq $matchingParameter)
                 {
-                    if ($variableName -NotMatch '(?-i)^[\$@]{?[a-z].*')
+                    if ($variableName -Match '(?-i)^\$\{?[A-Z].*')
                     {
-                        $correctedVariableName = ($variableName.Substring(0, $firstLetterIndex) + $variableName.Substring($firstLetterIndex, 1).ToLower() + $variableName.Substring($firstLetterIndex + 1))
+                        $firstLetterIndex = [Math]::Max($variableName.IndexOf('$'), $variableName.IndexOf('{')) + 1
+                        $correctedVariableName = ($variableName.Substring(0, $firstLetterIndex) +
+                            $variableName.Substring($firstLetterIndex, 1).ToLower() +
+                            $variableName.Substring($firstLetterIndex + 1))
+
                         $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
                             $variable.Extent
                             $correctedVariableName
-                            "Updated the casing of the variable from '$variableName' to '$correctedVariableName'."
+                            "Corrected the casing of the variable name from '$variableName' to '$correctedVariableName'."
                         )
 
                         $suggestedCorrections = New-Object System.Collections.ObjectModel.Collection[$correctionTypeName]
@@ -241,7 +255,10 @@ function Measure-VariableNameCasing
 
                         $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                             'Extent' = $variable.Extent
-                            'Message' = "Variable names should start with a lowercase letter: '$variableName'."
+                            'Message' = @(
+                                "Variable names should start with a lowercase letter: '$variableName' should be"
+                                "'$correctedVariableName'."
+                            ) -join ' '
                             'RuleName' = 'PSUseCorrectVariableNameCasing'
                             'RuleSuppressionID' = 'PSUseCorrectVariableNameCasing'
                             'Severity' = 'Warning'
@@ -258,7 +275,10 @@ function Measure-VariableNameCasing
                     $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
                         $variable.Extent
                         $matchingParameter
-                        "Fixed the casing of the variable '$variableName' to match the parameter '$matchingParameter'."
+                        @(
+                            "Corrected the usage of the parameter '$variableName' to '$matchingParameter' to match its"
+                            'declaration.'
+                        ) -join ' '
                     )
 
                     $suggestedCorrections = New-Object System.Collections.ObjectModel.Collection[$correctionTypeName]
@@ -267,8 +287,8 @@ function Measure-VariableNameCasing
                     $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
                         'Extent' = $variable.Extent
                         'Message' = @(
-                            "Parameters should be used with exactly as they were declared: '$matchingParameter' instead"
-                            "of '$variableName'."
+                            "Parameters should be used exactly as they were declared: '$variableName' should be"
+                            "'$matchingParameter'."
                         ) -join ' '
                         'RuleName' = 'PSUseParametersAsDeclared'
                         'RuleSuppressionID' = 'PSUseParametersAsDeclared'

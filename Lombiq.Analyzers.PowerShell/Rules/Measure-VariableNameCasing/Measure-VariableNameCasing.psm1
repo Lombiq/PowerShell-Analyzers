@@ -12,8 +12,9 @@
     - PSUseParametersAsDeclared: Parameters should be used with exactly as they were declared.
 
     When fixing warnings, work through the rules in the order they are listed above, because violating
-    PSUseCorrectParameterNameCasing, while referencing that parameter with the correct casing, will also raise a
-    PSUseParametersAsDeclared warning. The latter will disappear after fixing the former.
+    PSAvoidUsingUnnecessaryBracesInVariableNames and/or PSUseCorrectParameterNameCasing, while referencing that
+    parameter with the correct casing or format, will also raise a PSUseParametersAsDeclared warning. The latter will
+    disappear after fixing the former(s).
 .EXAMPLE
     Measure-VariableNameCasing -Ast $Ast
 .INPUTS

@@ -4,6 +4,7 @@
 .DESCRIPTION
     Raises the following warnings regarding the casing of parameter names and variable names (including automatic
     variables):
+    - PSAvoidUsingUnnecessaryBracesInVariableNames: Variable names should not use unnecessary braces.
     - PSUseCorrectAutomaticVariableNames: Automatic variables should be used exactly as they are documented:
       https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_automatic_variables.
     - PSUseCorrectParameterNameCasing: Parameter names should start with an uppercase letter.
@@ -167,6 +168,37 @@ function Measure-VariableNameCasing
                 # Skip path-like expressions, including environment variables.
                 if (-not $variableName.StartsWith('${') -and $variableName.Contains(':'))
                 {
+                    continue
+                }
+
+                # Check if the variable name contains braces unnecessarily, i.e., there are no special characters in it.
+                if ($variableName -Match '(?-i)^\$\{[a-zA-Z\d]+\}')
+                {
+                    $bracelessVariableName = '$' + $variableName.Substring(2, $variableName.Length - 3)
+                    $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
+                        $variable.Extent
+                        $bracelessVariableName
+                        @(
+                            "Corrected the variable name '$variableName' to '$bracelessVariableName' not to use"
+                            'unnecessary braces.'
+                        ) -join ' '
+                    )
+
+                    $suggestedCorrections = New-Object System.Collections.ObjectModel.Collection[$correctionTypeName]
+                    $suggestedCorrections.add($correctionExtent) | Out-Null
+
+                    $analyzerViolations += [Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]@{
+                        'Extent' = $variable.Extent
+                        'Message' = @(
+                            "Variable names should not use unnecessary braces: '$variableName' should be"
+                            "'$bracelessVariableName'."
+                        ) -join ' '
+                        'RuleName' = 'PSAvoidUsingUnnecessaryBracesInVariableNames'
+                        'RuleSuppressionID' = 'PSAvoidUsingUnnecessaryBracesInVariableNames'
+                        'Severity' = 'Warning'
+                        'SuggestedCorrections' = $suggestedCorrections
+                    }
+
                     continue
                 }
 

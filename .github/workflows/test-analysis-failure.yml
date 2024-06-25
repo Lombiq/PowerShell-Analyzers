@@ -23,6 +23,7 @@ jobs:
         PSAvoidUsingDoubleQuotesForConstantString: Use single quotes when a string is constant.
         PSAvoidUsingEmptyCatchBlock: Empty catch block is used.
         PSAvoidUsingLineContinuation: Using backtick (line continuation) makes the code harder to read and maintain.
+        PSAvoidUsingUnnecessaryBracesInVariableNames: Variable names should not use unnecessary braces
         PSAvoidUsingWriteHost: File 'Violate-Analyzers.ps1' uses Write-Host.
         PSPlaceOpenBrace: Open brace is not on a new line.
         PSUseApprovedVerbs: The cmdlet 'Violate-Analyzers' uses an unapproved verb.
@@ -48,6 +49,7 @@ jobs:
         PSAvoidUsingDoubleQuotesForConstantString: Use single quotes when a string is constant.
         PSAvoidUsingEmptyCatchBlock: Empty catch block is used.
         PSAvoidUsingLineContinuation: Using backtick (line continuation) makes the code harder to read and maintain.
+        PSAvoidUsingUnnecessaryBracesInVariableNames: Variable names should not use unnecessary braces
         PSAvoidUsingWriteHost: File 'Violate-Analyzers.ps1' uses Write-Host.
         PSPlaceOpenBrace: Open brace is not on a new line.
         PSUseApprovedVerbs: The cmdlet 'Violate-Analyzers' uses an unapproved verb.

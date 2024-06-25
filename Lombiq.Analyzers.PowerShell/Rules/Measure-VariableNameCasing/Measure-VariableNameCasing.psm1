@@ -123,7 +123,8 @@ function Measure-VariableNameCasing
                 }
             }
 
-            # Set up a new dictionary that contains the parameters of the functions and their parents (root included).
+            # Set up a new dictionary that contains the parameters of the functions with their parents (and root)
+            # included.
             $functionParameterNamesWithParents = @{}
             $functionParameterNamesWithParents[$rootIndex] = $functionParameterNames[$rootIndex]
             foreach ($function in $functions)
@@ -141,7 +142,7 @@ function Measure-VariableNameCasing
                 $functionParameterNamesWithParents[$function.Name] += $functionParameterNames[$rootIndex]
             }
 
-            # Iterate through each variable expression in the whole AST.
+            # Extract each variable expression from the whole AST.
             $variables = $Ast.FindAll(
                 {
                     param([Ast] $astObject)
@@ -167,8 +168,8 @@ function Measure-VariableNameCasing
                 }
 
                 # Check if the variable is an automatic variable.
-                $automaticVariable = $automaticVariableNames | Where-Object {
-                    $PSItem -eq $variableName } | Select-Object -First 1
+                $automaticVariable = $automaticVariableNames | Where-Object { $PSItem -eq $variableName } |
+                    Select-Object -First 1
 
                 # If an automatic variable is found, check if it's used with the correct casing. The '-ceq' operator
                 # should work here, but it doesn't.

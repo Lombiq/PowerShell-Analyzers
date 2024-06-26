@@ -69,7 +69,7 @@ function Measure-VariableNameFormat
             $functionParameterNames[$rootIndex] = @()
 
             # Extract parameters from the root.
-            $rootParameters = Find-AstParameters -AstObject $Ast
+            $rootParameters = Find-AstParameter -AstObject $Ast
             $allParameters += $rootParameters
             $rootParameters | ForEach-Object { $functionParameterNames[$rootIndex] += $PSItem.Name.Extent.Text }
 
@@ -87,7 +87,7 @@ function Measure-VariableNameFormat
             {
                 $functionParameterNames[$function.Name] = @()
 
-                $functionParameters = Find-AstParameters -AstObject $function
+                $functionParameters = Find-AstParameter -AstObject $function
                 $allParameters += $functionParameters
                 foreach ($parameter in $functionParameters)
                 {
@@ -140,7 +140,7 @@ function Measure-VariableNameFormat
             $functionParameterNamesWithParents[$rootIndex] = $functionParameterNames[$rootIndex]
             foreach ($function in $functions)
             {
-                $parentFunctions = Find-AstParents -AstObject $function -ParentType ([FunctionDefinitionAst])
+                $parentFunctions = Find-AstParent -AstObject $function -ParentType ([FunctionDefinitionAst])
 
                 # Add the parameters of the function itself.
                 $functionParameterNamesWithParents[$function.Name] += $functionParameterNames[$function.Name]

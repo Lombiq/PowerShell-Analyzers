@@ -18,12 +18,8 @@ function Find-AstNearestParent
 }
 
 # Traverse the chain of parents of an AST object to extract each parent of a specific type.
-function Find-AstParents
+function Find-AstParent
 {
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute(
-        'PSUseSingularNouns',
-        '',
-        Justification = 'This function can return multiple parents.')]
     param(
         [Parameter(Mandatory = $true)] [Ast] $AstObject,
         [Parameter(Mandatory = $true)] [Type] $ParentType
@@ -41,12 +37,8 @@ function Find-AstParents
 }
 
 # Extract the parameters of a script block or a function definition.
-function Find-AstParameters
+function Find-AstParameter
 {
-    [System.Diagnostics.CodeAnalysis.SuppressMessageAttribute(
-        'PSUseSingularNouns',
-        '',
-        Justification = 'This function can return multiple parameters.')]
     param([Parameter(Mandatory = $true)] [Ast] $AstObject)
 
     $parameters = @()

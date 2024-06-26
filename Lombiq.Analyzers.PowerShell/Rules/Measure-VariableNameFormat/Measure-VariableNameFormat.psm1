@@ -13,7 +13,7 @@
 
     When fixing warnings, work through the rules in the order they are listed above, because violating
     PSAvoidUsingUnnecessaryBracesInVariableNames and/or PSUseCorrectParameterNameCasing, while referencing that
-    parameter with the correct casing or format, will also raise a PSUseParametersAsDeclared warning. The false 
+    parameter with the correct casing or format, will also raise a PSUseParametersAsDeclared warning. The false
     positives for later rules should disappear once you fix the warnings raised by earlier rules.
 .EXAMPLE
     Measure-VariableNameFormat -Ast $Ast

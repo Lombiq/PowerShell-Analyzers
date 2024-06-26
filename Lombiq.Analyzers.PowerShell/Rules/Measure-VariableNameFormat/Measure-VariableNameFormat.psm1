@@ -62,7 +62,8 @@ function Measure-VariableNameFormat
 
         try
         {
-            # The whole script block being analyzed is the root, which we call '€$', since it doesn't have a name.
+            # The whole script block being analyzed is the root. Since it doesn't have a name, we'll just call it '€$'
+            # for fun and profit; inspired by a fictive currency symbol.
             $rootIndex = '€$'
             $allParameters = @()
             $functionParameterNames = @{}

@@ -25,7 +25,7 @@
 
 using namespace System.Management.Automation.Language
 
-Import-Module (Join-Path (Split-Path -Path $MyInvocation.MyCommand.Path) '..\AstFunctions.ps1') -Force
+Import-Module (Join-Path -Path (Split-Path -Path $MyInvocation.MyCommand.Path) '..' 'AstFunctions.ps1') -Force
 
 function Measure-VariableNameFormat
 {

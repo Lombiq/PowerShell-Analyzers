@@ -232,7 +232,7 @@ function Measure-VariableNameFormat
                 # should work here, but it doesn't.
                 if ($null -ne $automaticVariable)
                 {
-                    if (-not $automaticVariable.Equals($variableName, 'InvariantCulture'))
+                    if (-not $automaticVariable.Equals($variableName, [System.StringComparison]::Ordinal))
                     {
                         $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
                             $variable.Extent
@@ -312,7 +312,7 @@ function Measure-VariableNameFormat
                 }
                 # If a parameter is found, check if it's used exactly as it was declared. The '-ceq' operator should
                 # work here, but it doesn't.
-                elseif (-not $matchingParameter.Equals($variableName, 'InvariantCulture'))
+                elseif (-not $matchingParameter.Equals($variableName, [System.StringComparison]::Ordinal))
                 {
                     $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
                         $variable.Extent

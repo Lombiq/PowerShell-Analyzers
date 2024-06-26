@@ -170,6 +170,13 @@ function Measure-VariableNameFormat
                 # expressions. Also skipping environment variables, where the casing doesn't matter.
                 if ($variableName.Contains(':'))
                 {
+                    $informationMessage = @(
+                        "Skipping the variable '$variableName' because it is a scoped variable or a path-like"
+                        'expression (including environment variables).'
+                    ) -join ' '
+
+                    Write-Information $informationMessage
+
                     continue
                 }
 

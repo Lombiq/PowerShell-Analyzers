@@ -4,7 +4,7 @@
 
 ## About
 
-PowerShell static code analysis via [PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer) and [Lombiq's recommended configuration for it](Lombiq.Analyzers.PowerShell/PSScriptAnalyzerSettings.psd1). Use it from the CLI, in GitHub Actions, or integrated into MSBuild builds. Demo video [here](https://www.youtube.com/watch?v=GqUvneHxZ8g).
+PowerShell static code analysis via [PSScriptAnalyzer](https://github.com/PowerShell/PSScriptAnalyzer) and [custom analyzer rules](Lombiq.Analyzers.PowerShell/Rules/CustomRules.md), accompanied by [Lombiq's recommended configuration for it](Lombiq.Analyzers.PowerShell/PSScriptAnalyzerSettings.psd1). Use it from the CLI, in GitHub Actions, or integrated into MSBuild builds. Demo video [here](https://www.youtube.com/watch?v=GqUvneHxZ8g).
 
 Looking for .NET static code analysis? Check out our [.NET Analyzers project](https://github.com/Lombiq/.NET-Analyzers).
 

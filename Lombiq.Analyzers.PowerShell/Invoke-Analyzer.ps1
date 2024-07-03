@@ -44,13 +44,14 @@ function Find-Recursively([string] $Path = '.', [string[]] $IncludeFile, [string
 
 function Write-FileError([string] $Message, [string] $Path, [int] $Line = 0, [int] $Column = 0)
 {
-    if ($Path) { $Path = Get-Item $Path }
+    if ($Path) { $Path = Get-Item $Path } 
 
     if ($ForGitHubActions)
     {
         $Message = $Message -replace '\s*(\r?\n\s*)+', ' '
         Write-Output "::error::$(if ($Path) { "$(Resolve-Path -Relative -Path $Path)($Line,$Column): " })$Message"
     }
+    
     elseif ($ForMsBuild)
     {
         if (-not $Message.Contains(':')) { $Message = ": $Message" }

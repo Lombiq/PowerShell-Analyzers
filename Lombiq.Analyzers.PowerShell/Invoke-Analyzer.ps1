@@ -44,7 +44,14 @@ function Find-Recursively([string] $Path = '.', [string[]] $IncludeFile, [string
 
 function Write-FileError([string] $Message, [string] $Path, [int] $Line = 0, [int] $Column = 0)
 {
+    Write-Output "::error::This is Path: $Path"
+    $relativePath = Resolve-Path -Relative -Path $Path
+    Write-Output "::error::This is relativePath: $relativePath"
+
     if ($Path) { $Path = Get-Item $Path }
+
+    $relativePath = Resolve-Path -Relative -Path $Path
+    Write-Output "::error::This is relativePath after Get-Item: $relativePath"
 
     if ($ForGitHubActions)
     {

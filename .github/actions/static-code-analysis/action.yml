@@ -4,19 +4,19 @@ description: Runs static code analysis on PowerShell scripts and cmdlets.
 inputs:
   run-windows-powershell:
     required: false
-    default: "true"
+    default: 'true'
     description: >
       If set to "true", static code analysis is ran through Windows PowerShell (version 5.x), but only on Windows.
   run-powershell-core:
     required: false
-    default: "true"
+    default: 'true'
     description: >
       If set to "true", static code analysis is ran through PowerShell Core (version 7+). When not "true", consider
       removing Linux-based machine-types from the strategy matrix as they won't run analysis through Windows PowerShell
       either.
 
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Windows PowerShell (5.x) Static Code Analysis (Windows-only)
       if: runner.os == 'Windows' && inputs.run-windows-powershell == 'true'

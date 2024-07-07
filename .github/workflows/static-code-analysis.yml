@@ -19,13 +19,13 @@ on:
       run-windows-powershell:
         required: false
         type: string
-        default: "true"
+        default: 'true'
         description: >
           If set to "true", static code analysis is ran through Windows PowerShell (version 5.x), but only on Windows.
       run-powershell-core:
         required: false
         type: string
-        default: "true"
+        default: 'true'
         description: >
           If set to "true", static code analysis is ran through PowerShell Core (version 7+). When not "true", consider
           removing Linux-based machine-types from the strategy matrix as they won't run analysis through Windows
@@ -48,7 +48,7 @@ on:
         description: If set to "true", this will cancel the current workflow run with all jobs if this workflow fails.
         required: false
         type: string
-        default: "true"
+        default: 'true'
 
 jobs:
   powershell-static-code-analysis:

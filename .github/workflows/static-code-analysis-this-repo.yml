@@ -14,5 +14,5 @@ jobs:
     with:
       # Making sure that analysis runs through both PowerShell editions regardless of the default configuration of the
       # workflow and the underlying action to ensure backwards-compatibility.
-      run-windows-powershell: "true"
-      run-powershell-core: "true"
+      run-windows-powershell: 'true'
+      run-powershell-core: 'true'

@@ -80,7 +80,9 @@ else
     exit -1
 }
 
-$installVersion = '1.22.0'
+# It's best if this is the same version as in the runner images, see:
+# https://github.com/actions/runner-images?tab=readme-ov-file#available-images.
+$installVersion = '1.23.0'
 if ((Get-InstalledModule PSScriptAnalyzer -ErrorAction SilentlyContinue).Version -ne [Version]$installVersion)
 {
     try

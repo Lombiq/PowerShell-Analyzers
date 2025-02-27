@@ -10,3 +10,8 @@ try { Violate-Analyzers } catch { }
 
 "Lombiq", `
 'Orchard', 'Hastlayer' | % { $_ }
+
+$hashtable = @{
+    property1 = 'Lombiq'
+    anotherProperty = 'Orchard'
+}

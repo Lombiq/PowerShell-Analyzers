@@ -52,9 +52,9 @@
         PSUseCorrectCasing = @{
             Enable = $true
         }
-	PSAlignAssignmentStatement = @{
-	    Enable = $true
+        PSAlignAssignmentStatement = @{
+            Enable = $true
             CheckHashtable = $true
-	}
+        }
     }
 }

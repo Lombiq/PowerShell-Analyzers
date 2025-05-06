@@ -82,7 +82,9 @@ else
 
 # It's best if this is the same version as in the runner images, see:
 # https://github.com/actions/runner-images?tab=readme-ov-file#available-images.
-$installVersion = '1.23.0'
+# This needs to be kept up to date by hand until Renovate supports PowerShell modules:
+# https://github.com/renovatebot/renovate/issues/15155.
+$installVersion = '1.24.0'
 if ((Get-InstalledModule PSScriptAnalyzer -ErrorAction SilentlyContinue).Version -ne [Version]$installVersion)
 {
     try

@@ -9,7 +9,7 @@ function Find-AstNearestParent
     )
 
     $parent = $AstObject.Parent
-    while ($null -ne $parent -and $parent -isNot $ParentType)
+    while ($null -ne $parent -and $parent -isnot $ParentType)
     {
         $parent = $parent.Parent
     }

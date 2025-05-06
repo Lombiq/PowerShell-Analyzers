@@ -31,7 +31,7 @@ function Measure-VariableNameFormat
 {
     [CmdletBinding()]
     [OutputType([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
-    Param
+    param
     (
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
@@ -39,7 +39,7 @@ function Measure-VariableNameFormat
         $Ast
     )
 
-    Process
+    process
     {
         $analyzerViolations = New-Object System.Collections.Generic.List[Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord]
 
@@ -103,7 +103,7 @@ function Measure-VariableNameFormat
                 $firstLetterIndex = [Math]::Max($parameterName.IndexOf('$'), $parameterName.IndexOf('{')) + 1
 
                 # Check if the parameter name starts with an uppercase letter.
-                if ($parameterName -Match '(?-i)^\$\{?[a-z].*')
+                if ($parameterName -match '(?-i)^\$\{?[a-z].*')
                 {
                     $correctedParameterName = ($parameterName.Substring(0, $firstLetterIndex) +
                         $parameterName.Substring($firstLetterIndex, 1).ToUpper() +
@@ -182,7 +182,7 @@ function Measure-VariableNameFormat
                 }
 
                 # Check if the variable name contains braces unnecessarily, i.e., there are no special characters in it.
-                if ($variableName -Match '(?-i)^\$\{[a-zA-Z\d]+\}')
+                if ($variableName -match '(?-i)^\$\{[a-zA-Z\d]+\}')
                 {
                     $bracelessVariableName = '$' + $variableName.Substring(2, $variableName.Length - 3)
                     $correctionExtent = New-Object -TypeName $correctionTypeName -ArgumentList @(
@@ -279,7 +279,7 @@ function Measure-VariableNameFormat
                 # If the variable is not a parameter, check if it starts with a lowercase letter.
                 if ($null -eq $matchingParameter)
                 {
-                    if ($variableName -Match '(?-i)^\$\{?[A-Z].*')
+                    if ($variableName -match '(?-i)^\$\{?[A-Z].*')
                     {
                         $firstLetterIndex = [Math]::Max($variableName.IndexOf('$'), $variableName.IndexOf('{')) + 1
                         $correctedVariableName = ($variableName.Substring(0, $firstLetterIndex) +

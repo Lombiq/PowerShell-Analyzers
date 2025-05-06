@@ -21,7 +21,7 @@ function Measure-LineContinuation
 {
     [CmdletBinding()]
     [OutputType([Microsoft.Windows.Powershell.ScriptAnalyzer.Generic.DiagnosticRecord[]])]
-    Param
+    param
     (
         [Parameter(Mandatory = $true)]
         [ValidateNotNullOrEmpty()]
@@ -29,7 +29,7 @@ function Measure-LineContinuation
         $Token
     )
 
-    Process
+    process
     {
         $results = @()
 

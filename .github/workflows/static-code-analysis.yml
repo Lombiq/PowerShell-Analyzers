@@ -79,7 +79,7 @@ jobs:
           token: ${{ secrets.CHECKOUT_TOKEN }}
 
       - name: PowerShell Static Code Analysis
-        uses: Lombiq/PowerShell-Analyzers/.github/actions/static-code-analysis@issue/INFRA-167
+        uses: Lombiq/PowerShell-Analyzers/.github/actions/static-code-analysis@dev
         with:
           run-windows-powershell: ${{ inputs.run-windows-powershell }}
           run-powershell-core: ${{ inputs.run-powershell-core }}

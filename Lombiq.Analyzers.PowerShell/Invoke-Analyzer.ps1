@@ -7,7 +7,7 @@
     'ForMsBuild',
     Justification = 'False positive due to https://github.com/PowerShell/PSScriptAnalyzer/issues/1472.')]
 param(
-    $SettingsPath = (Join-Path (Split-Path -Parent $MyInvocation.MyCommand.Path) 'PSScriptAnalyzerSettings.psd1'),
+    $SettingsPath = (Join-Path (Split-Path -Path $MyInvocation.MyCommand.Path -Parent) 'PSScriptAnalyzerSettings.psd1'),
     [Switch] $ForGitHubActions,
     [Switch] $ForMsBuild,
     [Switch] $IncludeTestSolutions,

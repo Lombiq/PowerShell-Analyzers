@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="../../Lombiq.Analyzers.PowerShell/Lombiq.Analyzers.PowerShell.csproj" />
+  <Project Path="Lombiq.Analyzers.PowerShell.ProjectReference.csproj" />
+</Solution>

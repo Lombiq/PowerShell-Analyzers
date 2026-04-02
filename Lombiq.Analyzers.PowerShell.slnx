@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/.github/" />
+  <Folder Name="/.github/actions/" />
+  <Folder Name="/.github/actions/static-code-analysis/">
+    <File Path=".github/actions/static-code-analysis/action.yml" />
+  </Folder>
+  <Folder Name="/.github/workflows/">
+    <File Path=".github/workflows/create-jira-issues-for-community-activities.yml" />
+    <File Path=".github/workflows/publish-nuget.yml" />
+    <File Path=".github/workflows/static-code-analysis-this-repo.yml" />
+    <File Path=".github/workflows/static-code-analysis.yml" />
+    <File Path=".github/workflows/test-analysis-failure.yml" />
+    <File Path=".github/workflows/validate-submodule-pull-request.yml" />
+  </Folder>
+  <Project Path="Lombiq.Analyzers.PowerShell/Lombiq.Analyzers.PowerShell.csproj" />
+</Solution>

@@ -9,7 +9,7 @@ on:
 jobs:
   validate-nuget-publish:
     name: Validate NuGet Publish
-    uses: Lombiq/GitHub-Actions/.github/workflows/validate-nuget-publish.yml@dev
+    uses: Lombiq/GitHub-Actions/.github/workflows/validate-nuget-publish.yml@issue/OSOE-1199
     with:
       # These warnings are related to the tooling erroneously assuming that a ps1 file must be an (un)install script. In
       # this repo the ps1 files are assets to be used by the consumer.

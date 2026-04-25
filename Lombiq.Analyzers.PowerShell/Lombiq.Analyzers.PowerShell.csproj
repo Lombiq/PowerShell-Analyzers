@@ -5,25 +5,21 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
-    <DefaultItemExcludes>$(DefaultItemExcludes);.git*</DefaultItemExcludes>
     <IsPublishable>false</IsPublishable>
   </PropertyGroup>
 
+  <Import Condition="'$(NuGetBuild)' != 'true'" Project="../../../src/Utilities/Lombiq.MSBuild.Targets/Lombiq.MSBuild.Base.Sdk/Sdk/Import.props" />
+  <Import Condition="'$(NuGetBuild)' == 'true'" Project="Sdk.props" Sdk="Lombiq.MSBuild.Base.Sdk" Version="1.0.1-alpha.12.osoe-1208" />
+
   <PropertyGroup>
     <Title>Lombiq PowerShell Analyzers</Title>
-    <Authors>Lombiq Technologies</Authors>
-    <Copyright>Copyright © 2022, Lombiq Technologies Ltd.</Copyright>
-    <Description>Lombiq PowerShell Analyzers: PowerShell static code analysis via PSScriptAnalyzer (https://github.com/PowerShell/PSScriptAnalyzer) and Lombiq's recommended configuration for it. Use it from the CLI, in GitHub Actions, or integrated into MSBuild builds. See the project website for detailed documentation.</Description>
-    <PackageIcon>NuGetIcon.png</PackageIcon>
+    <CopyrightYear>2022</CopyrightYear>
+    <DescriptionBody>PowerShell static code analysis via PSScriptAnalyzer (https://github.com/PowerShell/PSScriptAnalyzer) and Lombiq's recommended configuration for it. Use it from the CLI, in GitHub Actions, or integrated into MSBuild builds. See the project website for detailed documentation.</DescriptionBody>
     <PackageTags>Lombiq;Powershell;MSBuild</PackageTags>
     <RepositoryUrl>https://github.com/Lombiq/PowerShell-Analyzers</RepositoryUrl>
-    <PackageProjectUrl>https://github.com/Lombiq/PowerShell-Analyzers</PackageProjectUrl>
-    <PackageLicenseExpression>BSD-3-Clause</PackageLicenseExpression>
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\Readme.md" />
-    <None Include="NuGetIcon.png" Pack="true" PackagePath="" />
     <None Include="Lombiq.Analyzers.PowerShell.targets" Pack="true" PackagePath="build\Lombiq.Analyzers.PowerShell.targets" />
     <None Include="Lombiq.Analyzers.PowerShell.NuGet.props" Pack="true" PackagePath="build\Lombiq.Analyzers.PowerShell.props" />
     <None Include="Invoke-Analyzer.ps1" Pack="true" PackagePath="" />
@@ -31,4 +27,6 @@
     <None Include="Rules\**" Pack="true" PackagePath="Rules\" />
   </ItemGroup>
 
+  <Import Condition="'$(NuGetBuild)' != 'true'" Project="../../../src/Utilities/Lombiq.MSBuild.Targets/Lombiq.MSBuild.Base.Sdk/Sdk/Import.targets" />
+  <Import Condition="'$(NuGetBuild)' == 'true'" Project="Sdk.targets" Sdk="Lombiq.MSBuild.Base.Sdk" Version="1.0.1-alpha.12.osoe-1208" />
 </Project>

@@ -11,6 +11,8 @@
     <File Path=".github/workflows/static-code-analysis.yml" />
     <File Path=".github/workflows/test-analysis-failure.yml" />
     <File Path=".github/workflows/validate-submodule-pull-request.yml" />
+    <File Path=".github\workflows\validate-nuget-publish.yml" />
+    <File Path=".github\workflows\validate-pull-request.yml" />
   </Folder>
   <Project Path="Lombiq.Analyzers.PowerShell/Lombiq.Analyzers.PowerShell.csproj" />
 </Solution>
